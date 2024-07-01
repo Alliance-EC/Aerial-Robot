@@ -16,7 +16,7 @@ static DJIMotorInstance *yaw_motor, *pitch_motor;
 static Publisher_t *gimbal_pub;                   // 云台应用消息发布者(云台反馈给cmd)
 static Subscriber_t *gimbal_sub;                  // cmd控制消息订阅者
 static Gimbal_Upload_Data_s gimbal_feedback_data; // 回传给cmd的云台状态信息
-static Gimbal_Ctrl_Cmd_s gimbal_cmd_recv;         // 来自cmd的控制信息
+static Gimbal_Ctrl_Cmd_s gimbal_cmd_recv;         // 来自cmd的控制信息1
 
 void GimbalInit()
 {
@@ -60,9 +60,9 @@ void GimbalInit()
         },
         .controller_param_init_config = {
             .angle_PID = {
-                .Kp                = 80, // 0.24, // 0.31, // 0.45
-                .Ki                = 1,
-                .Kd                = 2.05, // 1.8, // 1.65 //2.1  1.8
+                .Kp                = 85, 
+                .Ki                = 0,
+                .Kd                = 2.85, //2.85
                 .Derivative_LPF_RC = 0.002,
                 .DeadBand          = 0.0f,
                 .Improve           = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_DerivativeFilter | PID_OutputFilter,
@@ -71,9 +71,9 @@ void GimbalInit()
                 .MaxOut            = 40,
             },
             .speed_PID = {
-                .Kp                = 300, // 500
+                .Kp                = 280, // 500
                 .Ki                = 0,   // 0
-                .Kd                = 150, // 155.5,
+                .Kd                = 110, // 155.5,
                 .Improve           = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_OutputFilter | PID_DerivativeFilter,
                 .Output_LPF_RC     = 0.001,
                 .Derivative_LPF_RC = 0.002,
