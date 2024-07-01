@@ -16,7 +16,7 @@ static DJIMotorInstance *yaw_motor, *pitch_motor;
 static Publisher_t *gimbal_pub;                   // 云台应用消息发布者(云台反馈给cmd)
 static Subscriber_t *gimbal_sub;                  // cmd控制消息订阅者
 static Gimbal_Upload_Data_s gimbal_feedback_data; // 回传给cmd的云台状态信息
-static Gimbal_Ctrl_Cmd_s gimbal_cmd_recv;         // 来自cmd的控制信息1
+static Gimbal_Ctrl_Cmd_s gimbal_cmd_recv;         // 来自cmd的控制信息111
 
 void GimbalInit()
 {
