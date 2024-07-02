@@ -288,7 +288,7 @@ Gimbal_Status_Enum Gimbal_Status = GIMBAL_STATUS_GYRO;
 
     
 /**
- * @brief 鼠标移动云台
+ * @brief 鼠标移动云台 1
  *
  */
 static void GimbalSet()
