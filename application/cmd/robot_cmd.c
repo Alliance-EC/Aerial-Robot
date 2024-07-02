@@ -21,7 +21,7 @@
 #define YAW_ANGLE_MIN -106
 
 
-#if PITCH_FEED_TYPE                                                  // Pitch电机反馈数据源为陀螺仪
+#if PITCH_FEED_TYPE                                                  // Pitch 电机反馈数据源为陀螺仪
 #define PTICH_HORIZON_ANGLE 0                                        // PITCH水平时电机的角度
 #if PITCH_ECD_UP_ADD
 #define PITCH_LIMIT_ANGLE_UP   (((PITCH_POS_UP_LIMIT_ECD > PITCH_HORIZON_ECD) ? (PITCH_POS_UP_LIMIT_ECD - PITCH_HORIZON_ECD) : (PITCH_POS_UP_LIMIT_ECD + 8192 - PITCH_HORIZON_ECD)) * ECD_ANGLE_COEF_DJI)       // 云台竖直方向最大角度 0-360
