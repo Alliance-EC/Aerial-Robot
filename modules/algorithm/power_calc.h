@@ -15,6 +15,4 @@ void PowerControlInit(uint16_t max_power_init, float reduction_ratio_init);
 
 float PowerInputCalc(float motor_speed, float motor_current);
 
-float TotalPowerCalc(float input_power[]);
-
 float CurrentOutputCalc(float motor_power, float motor_speed, float motor_current);

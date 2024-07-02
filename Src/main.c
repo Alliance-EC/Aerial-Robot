@@ -212,18 +212,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-    if (htim->Instance == TIM6) {
-        /*-------------------------------------------热量控制部分---------------------------------------------*/
-        local_heat -= (referee_info.GameRobotState.shooter_id1_17mm_cooling_rate / 1000.0f); // 1000Hz冷却
-        if (local_heat < 0) {
-            local_heat = 0;
-        }
-        if (referee_info.PowerHeatData.shooter_17mm_heat0 - referee_info.GameRobotState.shooter_id1_17mm_cooling_limit >= 15) // 裁判系统判断已经超了热量
-        {
-            local_heat = referee_info.PowerHeatData.shooter_17mm_heat0;
-        }
-        Shoot_Fric_data_process();
-    }
+    
   /* USER CODE END Callback 1 */
 }
 

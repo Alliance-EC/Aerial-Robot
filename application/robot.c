@@ -58,18 +58,3 @@ void RobotInit()
     // 初始化完成,开启中断
     __enable_irq();
 }
-
-void RobotTask()
-{
-#if defined(ONE_BOARD) || defined(GIMBAL_BOARD)
-    RobotCMDTask();
-    GimbalTask();
-    //ShootTask();
-    My_UIGraphRefresh();
-#endif
-
-#if defined(ONE_BOARD) || defined(CHASSIS_BOARD)
-    ChassisTask();
-#endif
-    
-}

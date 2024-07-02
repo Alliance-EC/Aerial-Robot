@@ -41,11 +41,7 @@ SuperCapInstance *SuperCapInit(SuperCap_Init_Config_s *supercap_config)
     return super_cap_instance;
 }
 
-void SuperCapSend(SuperCapInstance *instance, uint8_t *data)
-{
-    memcpy(instance->can_ins->tx_buff, data, 8);
-    CANTransmit(instance->can_ins, 1);
-}
+
 
 SuperCap_Msg_s SuperCapGet(SuperCapInstance *instance)
 {

@@ -9,6 +9,7 @@
 
 #include "bmi088.h"
 #include "referee_UI.h"
+#include "power_calc.h"
 
 static INS_Instance *gimbal_IMU_data; // 云台IMU数据
 static DJIMotorInstance *yaw_motor, *pitch_motor;
@@ -17,6 +18,9 @@ static Publisher_t *gimbal_pub;                   // 云台应用消息发布者
 static Subscriber_t *gimbal_sub;                  // cmd控制消息订阅者
 static Gimbal_Upload_Data_s gimbal_feedback_data; // 回传给cmd的云台状态信息
 static Gimbal_Ctrl_Cmd_s gimbal_cmd_recv;         // 来自cmd的控制信息111
+
+extern referee_info_t referee_info;
+static referee_info_t *referee_data; // 用于获取裁判系统的数据
 
 void GimbalInit()
 {
@@ -49,7 +53,6 @@ void GimbalInit()
         },
         .cali_mode = BMI088_LOAD_PRE_CALI_MODE,
         .work_mode = BMI088_BLOCK_PERIODIC_MODE,
-
     };
     gimbal_IMU_data = INS_Init(BMI088Register(&config)); // IMU先初始化,获取姿态数据指针赋给yaw电机的其他数据来源
     // YAW
@@ -62,18 +65,18 @@ void GimbalInit()
             .angle_PID = {
                 .Kp                = 85, 
                 .Ki                = 0,
-                .Kd                = 2.85, //2.85
+                .Kd                = 2.95, //2.85
                 .Derivative_LPF_RC = 0.002,
                 .DeadBand          = 0.0f,
                 .Improve           = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_DerivativeFilter | PID_OutputFilter,
                 .Output_LPF_RC     = 0.002,
                 .IntegralLimit     = 11,
-                .MaxOut            = 40,
+                .MaxOut            = 250,
             },
             .speed_PID = {
-                .Kp                = 280, // 500
+                .Kp                = 100, // 500
                 .Ki                = 0,   // 0
-                .Kd                = 110, // 155.5,
+                .Kd                = 1.5, // 155.5,
                 .Improve           = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_OutputFilter | PID_DerivativeFilter,
                 .Output_LPF_RC     = 0.001,
                 .Derivative_LPF_RC = 0.002,
@@ -145,8 +148,6 @@ void GimbalTask()
     // 后续增加未收到数据的处理
     SubGetMessage(gimbal_sub, &gimbal_cmd_recv);
 
-    // @todo:现在已不再需要电机反馈,实际上可以始终使用IMU的姿态数据来作为云台的反馈,yaw电机的offset只是用来跟随底盘
-    // 根据控制模式进行电机反馈切换和过渡,视觉模式在robot_cmd模块就已经设置好,gimbal只看yaw_ref和pitch_ref
     switch (gimbal_cmd_recv.gimbal_mode) {
         // 停止
         case GIMBAL_ZERO_FORCE:
@@ -178,13 +179,10 @@ void GimbalTask()
         default:
             break;
     }
-    // 在合适的地方添加pitch重力补偿前馈力矩
-    // 根据IMU姿态/pitch电机角度反馈计算出当前配重下的重力矩
-    // ...
 
     // 设置反馈数据,主要是imu和yaw的ecd
     gimbal_feedback_data.gimbal_imu_data              = gimbal_IMU_data;
-    gimbal_feedback_data.yaw_motor_single_round_angle = (uint16_t)yaw_motor->measure.angle_single_round; // 推送消息
+    gimbal_feedback_data.Yaw_Total_Angle              = yaw_motor->measure.total_angle;
 
     // 推送消息
     PubPushMessage(gimbal_pub, (void *)&gimbal_feedback_data);

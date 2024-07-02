@@ -31,9 +31,9 @@ void ShootInit()
         },
         .controller_param_init_config = {
             .speed_PID = {
-                .Kp            = 1.5,//15,  // 2.5,//23, // 20   //5.5
+                .Kp            = 4.5,//15,  // 2.5,//23, // 20   //5.5
                 .Ki            = 0.0, // 0.4, // 0.5, // 1
-                .Kd            = 0,
+                .Kd            = 0.02,
                 .Improve       = PID_Integral_Limit,
                 .IntegralLimit = 10000,
                 .MaxOut        = 20000,
@@ -58,9 +58,8 @@ void ShootInit()
         .motor_type = M3508};
     friction_config.can_init_config.tx_id = 2;
     friction_l                            = DJIMotorInit(&friction_config);
-
+    
     friction_config.can_init_config.tx_id                             = 3; // 右摩擦轮,改txid和方向就行
-    //friction_config.controller_setting_init_config.motor_reverse_flag = MOTOR_DIRECTION_NORMAL;
     friction_r                                                        = DJIMotorInit(&friction_config);
 
 
@@ -86,14 +85,6 @@ void ShootInit()
                 .IntegralLimit = 5000,
                 .MaxOut        = 10000,
             },
-            // .current_PID = {
-            //     .Kp            = 1,   // 0.7
-            //     .Ki            = 0.1, // 0.1
-            //     .Kd            = 0,
-            //     .Improve       = PID_Integral_Limit,
-            //     .IntegralLimit = 5000,
-            //     .MaxOut        = 20000,
-            // },
         },
         .controller_setting_init_config = {
             .angle_feedback_source = MOTOR_FEED, .speed_feedback_source = MOTOR_FEED,
@@ -221,7 +212,7 @@ void ShootTask()
         DJIMotorSetRef(friction_r, -42500);
     } else if (shoot_cmd_recv.friction_mode == FRICTION_REVERSE) {
         DJIMotorSetRef(friction_l, -150);
-        DJIMotorSetRef(friction_r, -150);
+        DJIMotorSetRef(friction_r, 150);
     } else if (shoot_cmd_recv.friction_mode == FRICTION_OFF) // 关闭摩擦轮
     {
         
@@ -231,59 +222,4 @@ void ShootTask()
 
     // 反馈数据,目前暂时没有要设定的反馈数据,后续可能增加应用离线监测以及卡弹反馈
     PubPushMessage(shoot_pub, (void *)&shoot_feedback_data);
-}
-
-// 热量控制算法
-// #pragma messsage "TODO"
-uint32_t shoot_count = 0;
-float d_watch; // 创建一个全局变量来记录微分值，便于调试
-
-void Shoot_Fric_data_process(void)
-{
-    /*----------------------------------变量常量------------------------------------------*/
-    static bool bullet_waiting_confirm = false;                                         // 等待比较器确认
-    uint8_t shoot_speed                = referee_info.PowerHeatData.shooter_17mm_heat0; // 获取弹速
-    float data                         = friction_l->measure.speed_aps;                 // 获取摩擦轮转速
-    static uint16_t data_histroy[MAX_HISTROY];                                          // 做循环队列
-    static uint8_t head = 0, rear = 0;                                                  // 队列下标
-    float moving_average[2];                                                            // 移动平均滤波
-    uint8_t data_num;                                                                   // 循环队列元素个数
-    float derivative;                                                                   // 微分
-    /*-----------------------------------逻辑控制-----------------------------------------*/
-    data = abs(data);
-    /*入队*/
-    data_histroy[head] = data;
-    head++;
-    head %= MAX_HISTROY;
-    /*判断队列数据量*/
-    data_num = (head - rear + MAX_HISTROY) % MAX_HISTROY;
-    if (data_num >= Fliter_windowSize + 1) // 队列数据量满足要求
-    {
-        moving_average[0] = 0;
-        moving_average[1] = 0;
-        /*同时计算两个滤波*/
-        for (uint8_t i = rear, j = rear + 1, index = rear; index < rear + Fliter_windowSize; i++, j++, index++) {
-            i %= MAX_HISTROY;
-            j %= MAX_HISTROY;
-            moving_average[0] += data_histroy[i];
-            moving_average[1] += data_histroy[j];
-        }
-        moving_average[0] /= Fliter_windowSize;
-        moving_average[1] /= Fliter_windowSize;
-        /*滤波求导*/
-        derivative = moving_average[1] - moving_average[0];
-        /*导数比较*/
-        d_watch = derivative;
-        if (derivative < -300) {
-            bullet_waiting_confirm = true;
-        } else if (derivative > -100) {
-            if (bullet_waiting_confirm == true) {
-                local_heat += One_bullet_heat; // 确认打出
-                shoot_count++;
-                bullet_waiting_confirm = false;
-            }
-        }
-        rear++;
-        rear %= MAX_HISTROY;
-    }
 }

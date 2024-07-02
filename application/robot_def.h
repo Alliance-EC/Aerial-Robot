@@ -243,7 +243,7 @@ typedef struct
 typedef struct
 {
     INS_Instance *gimbal_imu_data;
-    uint16_t yaw_motor_single_round_angle;
+    float Yaw_Total_Angle;
 } Gimbal_Upload_Data_s;
 
 typedef struct

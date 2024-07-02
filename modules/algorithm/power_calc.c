@@ -13,23 +13,9 @@ float current_power        = 0;
 float speed_power          = 0;
 float motor_current_output = 0;
 
-float reduction_ratio,
-    total_power;
-uint16_t max_power;
-
 void PowerControlInit(uint16_t max_power_init, float reduction_ratio_init)
 {
-    int cnt   = 0;
-    max_power = max_power_init;
-    if (reduction_ratio_init != 0) {
-        reduction_ratio = reduction_ratio_init;
-    } else {
-        reduction_ratio = (187.0f / 3591.0f);
-    }
-    // if (cnt == 0) {
-    //     toque_coefficient *= reduction_ratio;
-    //     cnt++;
-    // }
+
 }
 
 float PowerInputCalc(float motor_speed, float motor_current)
@@ -45,19 +31,7 @@ float PowerInputCalc(float motor_speed, float motor_current)
     return power_input;
 }
 
-float TotalPowerCalc(float input_power[])
-{
-    total_power = 0;
-    for (int i = 0; i < 4; i++) {
-        if (input_power[i] < 0) {
-            continue;
-        } else {
-            total_power += input_power[i];
-        }
-        // total_power += input_power[i];
-    }
-    return total_power;
-}
+
 
 float give_power;
 float power_scale;
@@ -66,8 +40,8 @@ int8_t power_flag;
 float CurrentOutputCalc(float motor_power, float motor_speed, float motor_current)
 {
     motor_speed = motor_speed / 6.0f;
-    if (total_power > max_power) {
-        power_scale = max_power / total_power;
+    if (1) {
+        power_scale = 1;
         give_power  = motor_power * power_scale;
         power_flag  = 1;
         if (motor_power < 0) {
