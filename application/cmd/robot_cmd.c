@@ -187,7 +187,7 @@ static void RemoteControlSet()
             memcpy(&rec_pitch, vision_recv_data + 4, sizeof(float));
 
             gimbal_cmd_send.gimbal_mode   = GIMBAL_FREE_MODE;
-            shoot_cmd_send.friction_mode  = FRICTION_REVERSE;
+            shoot_cmd_send.friction_mode  = FRICTION_ON;
 
             if ((rec_yaw == 0 && rec_pitch == 0) || vision_recv_data[8] == 0) {
                 // 视觉未识别到目标,纯遥控器拨杆控制
@@ -213,7 +213,7 @@ static void RemoteControlSet()
                 shoot_cmd_send.friction_mode = FRICTION_ON;
                 shoot_cmd_send.load_mode     = LOAD_BURSTFIRE;
             } else {
-                shoot_cmd_send.friction_mode = FRICTION_OFF;
+                shoot_cmd_send.friction_mode = FRICTION_ON;
                 shoot_cmd_send.load_mode     = LOAD_STOP;
             }
         } else {
