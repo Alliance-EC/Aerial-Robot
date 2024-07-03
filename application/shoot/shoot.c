@@ -6,7 +6,7 @@
 #include "bsp_dwt.h"
 #include "general_def.h"
 #include "tool.h"
-#include "referee_UI.h"
+#include "UI.h"
 
 /* 对于双发射机构的机器人,将下面的数据封装成结构体即可,生成两份shoot应用实例 */
 static DJIMotorInstance *friction_l, *friction_r, *loader;

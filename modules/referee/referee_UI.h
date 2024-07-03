@@ -73,6 +73,6 @@ void UICharRefresh(referee_id_t *_id, String_Data_t string_Data);
  * @brief UI绘制发送任务
  * 
  */
-void My_UIGraphRefresh();
+
 
 #endif

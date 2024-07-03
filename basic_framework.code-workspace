@@ -23,7 +23,8 @@
       "type_traits": "c",
       "*.lib": "c",
       "numeric": "c",
-      "cstdint": "c"
+      "cstdint": "c",
+      "UI.C": "cpp"
     },
     "[yaml]": {
       "editor.insertSpaces": true,

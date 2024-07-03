@@ -17,6 +17,7 @@
 #include "buzzer.h"
 #include "ins_task.h"
 #include "referee_UI.h"
+#include "UI.h"
 
 #include "robot_cmd.h"
 #include "gimbal.h"
