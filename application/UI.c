@@ -159,12 +159,6 @@ void My_UIGraphRefresh()
         } else {
             UICircleDraw(&UI_Circle_t[5], "sc5", UI_Graph_Change, 9, UI_Color_White, 2, SCREEN_LENGTH / 2, SCREEN_LENGTH / 2, 250);
         }
-        // 底盘模式
-        if (Referee_Interactive_info.chassis_mode == CHASSIS_ROTATE) {
-            UICircleDraw(&UI_Circle_t[0], "sc0", UI_Graph_Change, 9, UI_Color_Green, 20, 700, 160, 8);
-        } else if (Referee_Interactive_info.chassis_mode == CHASSIS_FOLLOW_GIMBAL_YAW) {
-            UICircleDraw(&UI_Circle_t[0], "sc0", UI_Graph_Change, 9, UI_Color_White, 20, 700, 160, 8);
-        }
         // 摩擦轮
         // if (Referee_Interactive_info.friction_mode == FRICTION_ON) // 摩擦轮开启模式下
         // {

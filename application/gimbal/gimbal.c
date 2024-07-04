@@ -63,20 +63,20 @@ void GimbalInit()
         },
         .controller_param_init_config = {
             .angle_PID = {
-                .Kp                = 85, 
+                .Kp                = 105, 
                 .Ki                = 0,
-                .Kd                = 2.95, //2.85
+                .Kd                = 4.5, //2.95
                 .Derivative_LPF_RC = 0.002,
                 .DeadBand          = 0.0f,
                 .Improve           = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_DerivativeFilter | PID_OutputFilter,
                 .Output_LPF_RC     = 0.002,
                 .IntegralLimit     = 11,
-                .MaxOut            = 250,
+                .MaxOut            = 400,
             },
             .speed_PID = {
-                .Kp                = 100, // 500
+                .Kp                = 100, // 100
                 .Ki                = 0,   // 0
-                .Kd                = 1.5, // 155.5,
+                .Kd                = 2.5, // 2.0
                 .Improve           = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_OutputFilter | PID_DerivativeFilter,
                 .Output_LPF_RC     = 0.001,
                 .Derivative_LPF_RC = 0.002,
@@ -103,17 +103,19 @@ void GimbalInit()
         },
         .controller_param_init_config = {
             .angle_PID = {
-                .Kp            = 150, // 35, // 40, // 10
-                .Ki            = 1,   // 0.1
-                .Kd            = 3,   // 3.75
-                .Improve       = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement,
+                .Kp            = 250, // 150
+                .Ki            = 50,  // 1
+                .Kd            = 6.5, // 3
+                .Improve       = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_ChangingIntegrationRate,
+                .CoefA         = 0.2,
+                .CoefB         = 0.001,
                 .IntegralLimit = 10,
-                .MaxOut        = 30,
+                .MaxOut        = 40,
             },
             .speed_PID = {
                 .Kp                = 3000, // 10500, // 13000,//10500,  // 10500
                 .Ki                = 0,    // 12000, // 10000, // 10000
-                .Kd                = 1,    // 0
+                .Kd                = 5,    // 0
                 .Improve           = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_OutputFilter | PID_DerivativeFilter,
                 .Output_LPF_RC     = 0.001,
                 .Derivative_LPF_RC = 0.002,

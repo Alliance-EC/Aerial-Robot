@@ -429,15 +429,14 @@ void UpDateUI()
     Referee_Interactive_info.friction_mode = shoot_cmd_send.friction_mode;
     Referee_Interactive_info.shoot_mode    = shoot_cmd_send.shoot_mode;
     Referee_Interactive_info.lid_mode      = shoot_cmd_send.lid_mode;
-    // Referee_Interactive_info.Chassis_Power_Data = ; 暂时没有，等待移植
 
     // 保存上一次的UI数据
-    Referee_Interactive_info.chassis_last_mode       = Referee_Interactive_info.chassis_mode;
+
     Referee_Interactive_info.gimbal_last_mode        = Referee_Interactive_info.gimbal_mode;
     Referee_Interactive_info.shoot_last_mode         = Referee_Interactive_info.shoot_mode;
     Referee_Interactive_info.friction_last_mode      = Referee_Interactive_info.friction_mode;
     Referee_Interactive_info.lid_last_mode           = Referee_Interactive_info.lid_mode;
-    Referee_Interactive_info.Chassis_last_Power_Data = Referee_Interactive_info.Chassis_Power_Data;
+
 
     Pitch_Angle = gimbal_fetch_data.gimbal_imu_data->output.INS_angle[1] * RAD_TO_ANGLE * (-1); // 获得IMU的pitch绝对角度（角度制），用于绘制UI
     Yaw_Angle   = gimbal_fetch_data.gimbal_imu_data->output.INS_angle[0] * RAD_TO_ANGLE;        // 获得IMU的yaw绝对角度（角度制），用于绘制UI
@@ -505,7 +504,6 @@ void RobotCMDTask()
         gimbal_cmd_send.gimbal_mode   = GIMBAL_ZERO_FORCE;
         shoot_cmd_send.friction_mode  = FRICTION_OFF;
         shoot_cmd_send.load_mode      = LOAD_STOP;
-        // shoot_cmd_send.shoot_mode     = SHOOT_OFF;
     }
     // 设置视觉发送数据,还需增加加速度和角速度数据
 

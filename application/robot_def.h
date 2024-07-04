@@ -26,7 +26,7 @@
 
 /* 机器人重要参数定义,注意根据不同机器人进行修改,浮点数需要以.0或f结尾,无符号以u结尾 */
 // 云台参数
-#define YAW_CHASSIS_ALIGN_ECD     4732//5122//4054//4097 //5076 //4072//4097 // 云台和底盘对齐指向相同方向时的电机编码器值,若对云台有机械改动需要修改
+
 #define YAW_ECD_GREATER_THAN_4096 1//1    // ALIGN_ECD值是否大于4096,是为1,否为0;用于计算云台偏转角度
 #define PITCH_HORIZON_ECD         2093 // 云台处于水平位置时编码器值,若对云台有机械改动需要修改
 #define PITCH_POS_UP_LIMIT_ECD    1975 // 3750 // 云台竖直方向高处限位编码器值,若对云台有机械改动需要修改
@@ -46,8 +46,6 @@
 #define RADIUS_WHEEL           153   // 轮子半径
 #define REDUCTION_RATIO_WHEEL  13.0f // 电机减速比,因为编码器量测的是转子的速度而不是输出轴的速度故需进行转换
 
-#define CHASSIS_SPEED          20000 //15000  //9500 //键盘控制不限功率时底盘最大移动速度
-// #define YAW_
 
 // 模拟小电脑负重 652.2
 // 其他参数(尽量所有参数集中到此文件)
@@ -104,26 +102,6 @@ typedef enum {
     APP_ERROR,
 } App_Status_e;
 
-// 底盘模式设置
-/**
- * @brief 后续考虑修改为云台跟随底盘,而不是让底盘去追云台,云台的惯量比底盘小.
- *
- */
-typedef enum {
-    CHASSIS_ZERO_FORCE = 0,    // 电流零输入
-    CHASSIS_ROTATE,            // 小陀螺模式
-    CHASSIS_ROTATE_REVERSE,    // 小陀螺反转模式
-    CHASSIS_NO_FOLLOW,         // 不跟随，允许全向平移
-    CHASSIS_FOLLOW_GIMBAL_YAW, // 跟随模式，底盘叠加角度环控制
-} chassis_mode_e;
-
-
-// 底盘状态标志位
-typedef enum {
-    CHASSIS_STATUS_ROTATE = 0,
-    CHASSIS_STATUS_FOLLOW,
-    CHASSIS_STATUS_FREE,
-} Chassis_Status_Enum;
 
 // 云台模式设置
 typedef enum {
@@ -170,11 +148,7 @@ typedef enum {
     LOAD_BURSTFIRE, // 连发
 } loader_mode_e;
 
-// 功率限制,从裁判系统获取,是否有必要保留?
-typedef struct
-{ // 功率控制
-    float chassis_power_mx;
-} Chassis_Power_Data_s;
+
 
 /* ----------------CMD应用发布的控制数据,应当由gimbal/chassis/shoot订阅---------------- */
 /**
@@ -189,8 +163,6 @@ typedef struct
     float vy;           // 横移方向速度
     float wz;           // 旋转速度
     float offset_angle; // 底盘和归中位置的夹角
-    chassis_mode_e chassis_mode;
-    int chassis_speed_buff;
     // UI部分
     //  ...
 
