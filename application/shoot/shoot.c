@@ -17,6 +17,9 @@ static Shoot_Ctrl_Cmd_s shoot_cmd_recv; // 来自cmd的发射控制信息
 static Subscriber_t *shoot_sub;
 static Shoot_Upload_Data_s shoot_feedback_data; // 来自cmd的发射控制信息
 
+float delta_friction=0;
+float delta_speed_r=0;
+float delta_speed_l = 0;
 // dwt定时,计算冷却用
 static float hibernate_time = 0, dead_time = 0;
 // 用来控制UI的刷新频率
@@ -31,10 +34,10 @@ void ShootInit()
         },
         .controller_param_init_config = {
             .speed_PID = {
-                .Kp            = 4.5,//15,  // 2.5,//23, // 20   //5.5
-                .Ki            = 0.0, // 0.4, // 0.5, // 1
-                .Kd            = 0.02,
-                .Improve       = PID_Integral_Limit,
+                .Kp      = 4.5 ,//0.3
+                .Ki      = 0, //10
+                .Kd      = 0,
+                .Improve = PID_Integral_Limit,
                 .IntegralLimit = 10000,
                 .MaxOut        = 20000,
             },
@@ -46,13 +49,13 @@ void ShootInit()
             //     .IntegralLimit = 10000,
             //     .MaxOut        = 20000,
             // },
-        }, 
+        },
         .controller_setting_init_config = {
             .angle_feedback_source = MOTOR_FEED,
             .speed_feedback_source = MOTOR_FEED,
 
             .outer_loop_type    = SPEED_LOOP,
-            .close_loop_type    = SPEED_LOOP ,
+            .close_loop_type    = SPEED_LOOP,
             .motor_reverse_flag = MOTOR_DIRECTION_NORMAL,
         },
         .motor_type = M3508};
@@ -60,8 +63,8 @@ void ShootInit()
     friction_l                            = DJIMotorInit(&friction_config);
     
     friction_config.can_init_config.tx_id                             = 3; // 右摩擦轮,改txid和方向就行
-    friction_r                                                        = DJIMotorInit(&friction_config);
-
+    friction_config.controller_setting_init_config.motor_reverse_flag=MOTOR_DIRECTION_REVERSE;
+    friction_r = DJIMotorInit(&friction_config);
 
     // 拨盘电机
     Motor_Init_Config_s loader_config = {
@@ -208,18 +211,19 @@ void ShootTask()
     // 确定是否开启摩擦轮,后续可能修改为键鼠模式下始终开启摩擦轮(上场时建议一直开启)
     if (shoot_cmd_recv.friction_mode == FRICTION_ON) {
         // 根据收到的弹速设置设定摩擦轮电机参考值,需实测后填入
-        DJIMotorSetRef(friction_l, 42500); //42500
-        DJIMotorSetRef(friction_r, -42500);
+        DJIMotorSetRef(friction_l, 42500); // 42500
+        DJIMotorSetRef(friction_r, 42500);
     } else if (shoot_cmd_recv.friction_mode == FRICTION_REVERSE) {
         DJIMotorSetRef(friction_l, -150);
         DJIMotorSetRef(friction_r, 150);
     } else if (shoot_cmd_recv.friction_mode == FRICTION_OFF) // 关闭摩擦轮
     {
-        
-        DJIMotorSetRef(friction_l, 0);
         DJIMotorSetRef(friction_r, 0);
+        DJIMotorSetRef(friction_l, 0);
     }
-
+    delta_friction=friction_l->measure.speed_aps+ friction_r->measure.speed_aps;
+    delta_speed_l = friction_l->measure.speed_aps -42500;
+    delta_speed_r = friction_r->measure.speed_aps +42500;
     // 反馈数据,目前暂时没有要设定的反馈数据,后续可能增加应用离线监测以及卡弹反馈
     PubPushMessage(shoot_pub, (void *)&shoot_feedback_data);
 }
