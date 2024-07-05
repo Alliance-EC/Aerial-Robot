@@ -13,7 +13,7 @@
             0,           \
     }
 
-#define RAMP_TIME 1000 //2000//1000
+#define RAMP_TIME 70
 #define SUPER_RAMP_TIME 100
 
 // 斜坡类型，计算WASD移动映射在底盘的速度
@@ -36,6 +36,11 @@ extern ramp_t lr_ramp;
 extern ramp_t rotate_ramp;
 extern ramp_t slow_ramp;
 extern ramp_t close_ramp;
+extern ramp_t shoot_ramp_r;
+extern ramp_t shoot_ramp_l;
+extern ramp_t yaw_limit_ramp;
+extern ramp_t pitch_limit_ramp;
+
 
 void ramp_init(ramp_t *ramp, int32_t scale);
 

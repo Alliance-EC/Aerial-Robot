@@ -25,6 +25,7 @@ static float hibernate_time = 0, dead_time = 0;
 // 用来控制UI的刷新频率
 static uint8_t UI_timer = 0;
 
+bool friction_mode_last =0;
 void ShootInit()
 {
     // 左摩擦轮
@@ -109,7 +110,7 @@ void ShootInit()
     DJIMotorStop(loader);
 
     DJIMotorOuterLoop(friction_l, SPEED_LOOP); // 切换到速度环
-    DJIMotorOuterLoop(friction_r, SPEED_LOOP); // 切换到速度环
+    DJIMotorOuterLoop(friction_r, SPEED_LOOP); // 切换到速度环=
 }
 
 uint16_t Block_Time;            // 堵转时间
@@ -207,23 +208,33 @@ void ShootTask()
             while (1)
                 ; // 未知模式,停止运行,检查指针越界,内存溢出等问题
     }
-
+    
     // 确定是否开启摩擦轮,后续可能修改为键鼠模式下始终开启摩擦轮(上场时建议一直开启)
     if (shoot_cmd_recv.friction_mode == FRICTION_ON) {
         // 根据收到的弹速设置设定摩擦轮电机参考值,需实测后填入
-        DJIMotorSetRef(friction_l, 42500); // 42500
-        DJIMotorSetRef(friction_r, 42500);
-    } else if (shoot_cmd_recv.friction_mode == FRICTION_REVERSE) {
-        DJIMotorSetRef(friction_l, -150);
-        DJIMotorSetRef(friction_r, 150);
+        if (friction_mode_last==FRICTION_OFF){
+            ramp_init(&shoot_ramp_l, RAMP_TIME);
+            ramp_init(&shoot_ramp_r, RAMP_TIME);
+        }
+        DJIMotorSetRef(friction_l, 42500*ramp_calc(&shoot_ramp_l)); // 42500
+        DJIMotorSetRef(friction_r, 42500*ramp_calc(&shoot_ramp_r));
+    } 
+    else if (shoot_cmd_recv.friction_mode == FRICTION_REVERSE) {
+        // DJIMotorSetRef(friction_l, -150);
+        // DJIMotorSetRef(friction_r, 150);
     } else if (shoot_cmd_recv.friction_mode == FRICTION_OFF) // 关闭摩擦轮
     {
-        DJIMotorSetRef(friction_r, 0);
-        DJIMotorSetRef(friction_l, 0);
+        if (friction_mode_last == FRICTION_ON) {
+            ramp_init(&shoot_ramp_l, RAMP_TIME);
+            ramp_init(&shoot_ramp_r, RAMP_TIME);
+        }
+        DJIMotorSetRef(friction_r, 42500 * (1 - ramp_calc(&shoot_ramp_r)));
+        DJIMotorSetRef(friction_l, 42500 * (1 - ramp_calc(&shoot_ramp_l)));
     }
     delta_friction=friction_l->measure.speed_aps+ friction_r->measure.speed_aps;
     delta_speed_l = friction_l->measure.speed_aps -42500;
     delta_speed_r = friction_r->measure.speed_aps +42500;
+    friction_mode_last = shoot_cmd_recv.friction_mode;
     // 反馈数据,目前暂时没有要设定的反馈数据,后续可能增加应用离线监测以及卡弹反馈
-    PubPushMessage(shoot_pub, (void *)&shoot_feedback_data);
+     PubPushMessage(shoot_pub, (void *)&shoot_feedback_data);
 }

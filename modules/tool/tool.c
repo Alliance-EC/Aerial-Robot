@@ -8,8 +8,13 @@ ramp_t close_ramp  = RAMP_GEN_DAFAULT;
 
 ramp_t super_ramp   = RAMP_GEN_DAFAULT;
 
+ramp_t shoot_ramp_r        = RAMP_GEN_DAFAULT;
+ramp_t shoot_ramp_l        = RAMP_GEN_DAFAULT;
 ramp_t auto_yaw_ramp = RAMP_GEN_DAFAULT;
 ramp_t auto_pitch_ramp = RAMP_GEN_DAFAULT;
+
+ramp_t yaw_limit_ramp   = RAMP_GEN_DAFAULT;
+ramp_t pitch_limit_ramp = RAMP_GEN_DAFAULT;
 
 int heat_control    = 10; // 热量控制
 float heat_remain   = 0;  // 剩余热量

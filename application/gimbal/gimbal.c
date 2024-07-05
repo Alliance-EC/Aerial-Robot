@@ -63,9 +63,9 @@ void GimbalInit()
         },
         .controller_param_init_config = {
             .angle_PID = {
-                .Kp                = 105, 
+                .Kp                = 90, 
                 .Ki                = 0,
-                .Kd                = 4.5, //2.95
+                .Kd                = 4, //2.95
                 .Derivative_LPF_RC = 0.002,
                 .DeadBand          = 0.0f,
                 .Improve           = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_DerivativeFilter | PID_OutputFilter,
@@ -103,9 +103,9 @@ void GimbalInit()
         },
         .controller_param_init_config = {
             .angle_PID = {
-                .Kp            = 250, // 150
+                .Kp            = 110, // 150
                 .Ki            = 50,  // 1
-                .Kd            = 6.5, // 3
+                .Kd            = 2, // 3
                 .Improve       = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_ChangingIntegrationRate,
                 .CoefA         = 0.2,
                 .CoefB         = 0.001,
@@ -150,42 +150,24 @@ void GimbalTask()
     // 后续增加未收到数据的处理
     SubGetMessage(gimbal_sub, &gimbal_cmd_recv);
 
-    switch (gimbal_cmd_recv.gimbal_mode) {
+    if(gimbal_cmd_recv.gimbal_mode == GIMBAL_ZERO_FORCE) {
         // 停止
-        case GIMBAL_ZERO_FORCE:
             DJIMotorStop(yaw_motor);
             DJIMotorStop(pitch_motor);
-            break;
-        // 使用陀螺仪的反馈,底盘根据yaw电机的offset跟随云台或视觉模式采用
-        case GIMBAL_GYRO_MODE: // 后续只保留此模式
-            DJIMotorEnable(yaw_motor);
-            DJIMotorEnable(pitch_motor);
-            DJIMotorChangeFeed(yaw_motor, ANGLE_LOOP, OTHER_FEED);
-            DJIMotorChangeFeed(yaw_motor, SPEED_LOOP, OTHER_FEED);
-            DJIMotorChangeFeed(pitch_motor, ANGLE_LOOP, OTHER_FEED);
-            DJIMotorChangeFeed(pitch_motor, SPEED_LOOP, OTHER_FEED);
-            DJIMotorSetRef(yaw_motor, gimbal_cmd_recv.yaw); // yaw和pitch会在robot_cmd中处理好多圈和单圈
-            DJIMotorSetRef(pitch_motor, gimbal_cmd_recv.pitch);
-            break;
-        // 云台自由模式,使用编码器反馈,底盘和云台分离,仅云台旋转,一般用于调整云台姿态(英雄吊射等)/能量机关
-        case GIMBAL_FREE_MODE: 
-            DJIMotorEnable(yaw_motor);
-            DJIMotorEnable(pitch_motor);
-            DJIMotorChangeFeed(yaw_motor, ANGLE_LOOP, OTHER_FEED);
-            DJIMotorChangeFeed(yaw_motor, SPEED_LOOP, OTHER_FEED);
-            DJIMotorChangeFeed(pitch_motor, ANGLE_LOOP, OTHER_FEED);
-            DJIMotorChangeFeed(pitch_motor, SPEED_LOOP, OTHER_FEED);
-            DJIMotorSetRef(yaw_motor, gimbal_cmd_recv.yaw); // yaw和pitch会在robot_cmd中处理好多圈和单圈
-            DJIMotorSetRef(pitch_motor, gimbal_cmd_recv.pitch);
-            break;
-        default:
-            break;
+    }// 使用陀螺仪的反馈,底盘根据yaw电机的offset跟随云台或视觉模式采用
+    else{
+        DJIMotorEnable(yaw_motor);
+        DJIMotorEnable(pitch_motor);
+        DJIMotorChangeFeed(yaw_motor, ANGLE_LOOP, OTHER_FEED);
+        DJIMotorChangeFeed(yaw_motor, SPEED_LOOP, OTHER_FEED);
+        DJIMotorChangeFeed(pitch_motor, ANGLE_LOOP, OTHER_FEED);
+        DJIMotorChangeFeed(pitch_motor, SPEED_LOOP, OTHER_FEED);
+        DJIMotorSetRef(yaw_motor, gimbal_cmd_recv.yaw); // yaw和pitch会在robot_cmd中处理好多圈和单圈
+        DJIMotorSetRef(pitch_motor, gimbal_cmd_recv.pitch);
     }
-
     // 设置反馈数据,主要是imu和yaw的ecd
     gimbal_feedback_data.gimbal_imu_data              = gimbal_IMU_data;
     gimbal_feedback_data.Yaw_Total_Angle              = yaw_motor->measure.total_angle;
-
     // 推送消息
     PubPushMessage(gimbal_pub, (void *)&gimbal_feedback_data);
 }

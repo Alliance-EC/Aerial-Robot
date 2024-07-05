@@ -106,8 +106,9 @@ typedef enum {
 // 云台模式设置
 typedef enum {
     GIMBAL_ZERO_FORCE = 0, // 电流零输入
-    GIMBAL_FREE_MODE,      // 云台自由运动模式,即与底盘分离(底盘此时应为NO_FOLLOW)反馈值为电机total_angle;似乎可以改为全部用IMU数据?
-    GIMBAL_GYRO_MODE,      // 云台陀螺仪反馈模式,反馈值为陀螺仪pitch,total_yaw_angle,底盘可以为小陀螺和跟随模式
+    GIMBAL_RC_MODE,      // 云台自由运动模式,即与底盘分离(底盘此时应为NO_FOLLOW)反馈值为电机total_angle;似乎可以改为全部用IMU数据?
+    GIMBAL_PC_MODE,      // 云台陀螺仪反馈模式,反馈值为陀螺仪pitch,total_yaw_angle,底盘可以为小陀螺和跟随模式
+    GIMBAL_VISION_MODE,
 } gimbal_mode_e;
 
 //自瞄状态设置
@@ -116,13 +117,6 @@ typedef enum {
     AutoShooting_Open,            // 自瞄开启
     AutoShooting_Find,         // 自瞄识别到目标
 } auto_shoot_mode_e;
-
-//云台状态标志位
-typedef enum {
-    GIMBAL_STATUS_GYRO = 0,
-    GIMBAL_STATUS_FREE,
-    GIMBAL_STATUS_AUTOAIM,
-} Gimbal_Status_Enum;
 
 // 发射模式设置
 typedef enum {
@@ -173,10 +167,13 @@ typedef struct
 { // 云台角度控制
     float yaw;
     float pitch;
-    float chassis_rotate_wz;
-
+    int gimbal_yaw_max;
+    int gimbal_yaw_min;
+    int gimbal_pitch_max;
+    int gimbal_pitch_min;
     gimbal_mode_e gimbal_mode;
 } Gimbal_Ctrl_Cmd_s;
+
 
 // cmd发布的发射控制数据,由shoot订阅
 typedef struct
@@ -185,9 +182,11 @@ typedef struct
     loader_mode_e load_mode;
     lid_mode_e lid_mode;
     friction_mode_e friction_mode;
-    Bullet_Speed_limit_e bullet_speed; // 弹速枚举
+        Bullet_Speed_limit_e bullet_speed; // 弹速枚举
     uint8_t rest_heat;
     float shoot_rate; // 连续发射的射频,unit per s,发/秒
+
+    float delta_angle_abs;//开始刹车的区间
 } Shoot_Ctrl_Cmd_s;
 
 /* ----------------gimbal/shoot/chassis发布的反馈数据----------------*/
