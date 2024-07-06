@@ -25,7 +25,7 @@ static float hibernate_time = 0, dead_time = 0;
 // 用来控制UI的刷新频率
 static uint8_t UI_timer = 0;
 
-bool friction_mode_last =0;
+bool friction_mode_last =1;
 void ShootInit()
 {
     // 左摩擦轮
@@ -156,8 +156,10 @@ void ShootTask()
 
     // 对shoot mode等于SHOOT_STOP的情况特殊处理,直接停止所有电机(紧急停止)
     if (shoot_cmd_recv.shoot_mode == SHOOT_OFF) {
-        DJIMotorStop(friction_l);
-        DJIMotorStop(friction_r);
+        DJIMotorSetRef(friction_l, 0); // 42500
+        DJIMotorSetRef(friction_r, 0);
+        // DJIMotorStop(friction_l);
+        // DJIMotorStop(friction_r);
         DJIMotorStop(loader);
     } else // 恢复运行
     {
@@ -228,6 +230,7 @@ void ShootTask()
             ramp_init(&shoot_ramp_l, RAMP_TIME);
             ramp_init(&shoot_ramp_r, RAMP_TIME);
         }
+
         DJIMotorSetRef(friction_r, 42500 * (1 - ramp_calc(&shoot_ramp_r)));
         DJIMotorSetRef(friction_l, 42500 * (1 - ramp_calc(&shoot_ramp_l)));
     }

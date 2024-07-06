@@ -167,7 +167,8 @@ void GimbalTask()
     }
     // 设置反馈数据,主要是imu和yaw的ecd
     gimbal_feedback_data.gimbal_imu_data              = gimbal_IMU_data;
-    gimbal_feedback_data.Yaw_Total_Angle              = yaw_motor->measure.total_angle;
-    // 推送消息
-    PubPushMessage(gimbal_pub, (void *)&gimbal_feedback_data);
+    gimbal_feedback_data.yaw_motor              = yaw_motor;
+    gimbal_feedback_data.pitch_motor=pitch_motor;
+        // 推送消息
+        PubPushMessage(gimbal_pub, (void *)&gimbal_feedback_data);
 }

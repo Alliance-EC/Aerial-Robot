@@ -45,6 +45,5 @@ extern ramp_t pitch_limit_ramp;
 void ramp_init(ramp_t *ramp, int32_t scale);
 
 float ramp_calc(ramp_t *ramp);
-
+float brake_calc(float max, float brake, float position,float min,float cmd) ;
 extern int Trig_time;
-

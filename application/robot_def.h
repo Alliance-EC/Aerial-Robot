@@ -15,6 +15,7 @@
 #include "ins_task.h"
 #include "master_process.h"
 #include "stdint.h"
+#include "dji_motor.h"
 
 /* 开发板类型定义,烧录时注意不要弄错对应功能;修改定义后需要重新编译,只能存在一个定义! */
 #define ONE_BOARD // 单板控制整车
@@ -195,26 +196,13 @@ typedef struct
  *
  */
 
-typedef struct
-{
-#if defined(CHASSIS_BOARD) || defined(GIMBAL_BOARD) // 非单板的时候底盘还将imu数据回传(若有必要)
-    // attitude_t chassis_imu_data;
-#endif
-    // 后续增加底盘的真实速度
-    // float real_vx;
-    // float real_vy;
-    // float real_wz;
 
-    uint8_t rest_heat; // 剩余枪口热量
-    // Bullet_Speed_e bullet_speed; // 弹速限制
-    Enemy_Color_e enemy_color; // 0 for blue, 1 for red
-
-} Chassis_Upload_Data_s;
 
 typedef struct
 {
     INS_Instance *gimbal_imu_data;
-    float Yaw_Total_Angle;
+    DJIMotorInstance * yaw_motor;
+    DJIMotorInstance *pitch_motor;
 } Gimbal_Upload_Data_s;
 
 typedef struct

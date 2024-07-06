@@ -41,3 +41,22 @@ float ramp_calc(ramp_t *ramp)
     ramp->out = ramp->count / ((float)ramp->scale);
     return ramp->out;
 }
+
+float brake_calc(float max,float brake,float position,float min,float cmd){
+    float brake_out =1;
+    if (position >max || position <min){
+        if ((position > max && cmd > 0) || (position < min && cmd < 0)) {
+            brake_out = 0;
+        }
+    }
+    // else if (position >max - brake){
+    //     brake_out=(max-position)/brake;
+    // }
+    // else if (position <min+brake && position >min){
+    //     brake_out = (position-min) / brake;
+    // }
+    else {
+        brake_out=1;
+    }
+    return brake_out;
+}
