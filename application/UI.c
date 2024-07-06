@@ -14,7 +14,7 @@ extern referee_info_t referee_info;                         // 裁判系统数�
 extern Referee_Interactive_info_t Referee_Interactive_info; // 绘制UI所需的数据
 
 uint8_t UI_Seq;                           // 包序号，供整个referee文件使用
-static Graph_Data_t UI_shoot_dot[10];     // 射击准线 11
+static Graph_Data_t UI_shoot_dot[10];     // 射击准线 
 static Graph_Data_t UI_Deriction_line[4]; // 射击准线
 static Graph_Data_t UI_Energy[3];         // 电容能量条
 Graph_Data_t UI_Rectangle[10];            // 矩形
