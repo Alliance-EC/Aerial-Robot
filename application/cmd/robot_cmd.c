@@ -17,8 +17,8 @@
 #include "bsp_log.h"
 
 
-#define YAW_ANGLE_MAX 49
-#define YAW_ANGLE_MIN -105
+#define YAW_ANGLE_MAX 41
+#define YAW_ANGLE_MIN -97
 #define PITCH_ANGLE_MAX -8
 #define PITCH_ANGLE_MIN -35
 
@@ -130,11 +130,19 @@ static void RC_CONTROL_MODE()
 {
     shoot_cmd_send.shoot_mode = SHOOT_ON;    // 发射机构常开
     shoot_cmd_send.shoot_rate = 20;          // 射频默认25Hz
+
+    if ((rc_data[TEMP].rc.dial > 440)) {
+            Send_Once_Flag = 0; // UI重新发送
+        }
     // 左侧开关为[上]右侧开关为[下]，且接收到上位机的相对角度,视觉模式
     if ((switch_is_down(rc_data[TEMP].rc.switch_right) && switch_is_up(rc_data[TEMP].rc.switch_left))) {
         if (rc_data[TEMP].rc.dial > 440) {
             shoot_cmd_send.load_mode = LOAD_BURSTFIRE;
-        } else {
+        } 
+        else if (rc_data[TEMP].rc.dial < -440){
+            shoot_cmd_send.load_mode = LOAD_1_BULLET;
+        }
+        else {
             shoot_cmd_send.load_mode = LOAD_STOP;
         }
         gimbal_cmd_send.gimbal_mode = GIMBAL_VISION_MODE;
@@ -160,11 +168,15 @@ static void RC_CONTROL_MODE()
             gimbal_cmd_send.gimbal_mode = GIMBAL_RC_MODE;
             if (switch_is_mid(rc_data[TEMP].rc.switch_right) && switch_is_up(rc_data[TEMP].rc.switch_left)) // 左侧开关状态[上],右侧开关状态[中],底盘和云台分离,摩擦轮启动
             {
-                if (rc_data[TEMP].rc.dial > 400) {
-                    shoot_cmd_send.load_mode = LOAD_1_BULLET;
-                } else {
-                    shoot_cmd_send.load_mode = LOAD_STOP;
-                }
+               if (rc_data[TEMP].rc.dial > 440) {
+            shoot_cmd_send.load_mode = LOAD_BURSTFIRE;
+        } 
+        else if (rc_data[TEMP].rc.dial < -440){
+            shoot_cmd_send.load_mode = LOAD_1_BULLET;
+        }
+        else {
+            shoot_cmd_send.load_mode = LOAD_STOP;
+        }
             } 
         }
     }
@@ -264,11 +276,11 @@ static void Gimbal_control(int mode){
     }
 //遥控器控制
     else if (mode == GIMBAL_RC_MODE){
-        if (gimbal_cmd_send.gimbal_yaw_max && rc_data[TEMP].rc.rocker_l_ < 0) {
-        } else if (gimbal_cmd_send.gimbal_yaw_min && rc_data[TEMP].rc.rocker_l_ > 0) {
-        } else {
-            ramp_init(&yaw_limit_ramp, 20);
-        }
+        // if (gimbal_cmd_send.gimbal_yaw_max && rc_data[TEMP].rc.rocker_l_ < 0) {
+        // } else if (gimbal_cmd_send.gimbal_yaw_min && rc_data[TEMP].rc.rocker_l_ > 0) {
+        // } else {
+        //     ramp_init(&yaw_limit_ramp, 20);
+        // }
         yaw_control -= 0.0012f * (float)rc_data[TEMP].rc.rocker_l_ * brake_calc(limit_yaw_max, 10, gimbal_fetch_data.yaw_motor->measure.total_angle, limit_yaw_min, (float)rc_data[TEMP].rc.rocker_l_*(-1));
         pitch_control -= 0.00002f * (float)rc_data[TEMP].rc.rocker_l1 * brake_calc(limit_pitch_max, 5, gimbal_fetch_data.pitch_motor->measure.total_angle, limit_pitch_min, -(float)rc_data[TEMP].rc.rocker_l1);
         ;
@@ -332,7 +344,7 @@ void RobotCMDTask()
     }
 
     Gimbal_control(gimbal_cmd_send.gimbal_mode);
-        UpDateUI();
+    UpDateUI();
         
     remote_work_condition = RemoteControlIsOnline();
 

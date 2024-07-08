@@ -144,12 +144,12 @@ float loader_angle;
 /* 机器人发射机构控制核心任务 */
 void ShootTask()
 {
-    if (UI_timer < 10) {
-        UI_timer++;
-    } else {
-        UI_timer = 0;
-        My_UIGraphRefresh();
-    }
+    // if (UI_timer < 10) {
+    //     UI_timer++;
+    // } else {
+    //     UI_timer = 0;
+    //     My_UIGraphRefresh();
+    // }
 
     // 从cmd获取控制数据
     SubGetMessage(shoot_sub, &shoot_cmd_recv);
