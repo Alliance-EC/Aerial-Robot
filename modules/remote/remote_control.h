@@ -26,6 +26,7 @@
 #define KEY_STATE 1
 #define KEY_PRESS_WITH_CTRL 1
 #define KEY_PRESS_WITH_SHIFT 2
+#define KEY_PRESS_WITH_SHIFT_AND_CTRL 3
 
 // 检查接收值是否出错
 #define RC_CH_VALUE_MIN ((uint16_t)364)

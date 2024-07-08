@@ -102,14 +102,7 @@ void My_UIGraphRefresh()
         //  UICharRefresh(&referee_info.referee_id, UI_State_sta[2]);
         UICircleDraw(&UI_Circle_t[2], "sc2", UI_Graph_ADD, 9, UI_Color_White, 20, 1180, 160, 8);  // 摩擦轮是否开启显示
         UICircleDraw(&UI_Circle_t[3], "sc3", UI_Graph_ADD, 9, UI_Color_Orange, 20, 1280, 160, 8); // 摩擦轮是否正常显示
-        // 电容
-        // 显示电容是否正常开启
-        UICircleDraw(&UI_Circle_t[4], "sc4", UI_Graph_ADD, 9, UI_Color_White, 20, 580, 160, 8);
 
-        sprintf(UI_State_sta[3].show_Data, "SuperCap");
-        UICharDraw(&UI_State_sta[3], "ss3", UI_Graph_ADD, 9, UI_Color_Yellow, 20, 2, 80, 800, "SuperCap");
-        UICharRefresh(&referee_info.referee_id, UI_State_sta[3]);
-        UIRectangleDraw(&UI_Rectangle[1], "sr1", UI_Graph_ADD, 9, UI_Color_White, 4, 80, 700, 480, 740);
         //UILineDraw(&UI_Energy[1], "sn1", UI_Graph_ADD, 9, UI_Color_Green, 20, 80, 720, (uint32_t)((Super_condition_volt * Super_condition_volt - 144) / 532 * 400 + 80), 720); // 超电电压在12V-26V之间
         // 初始自瞄框
         /*
@@ -183,17 +176,7 @@ void My_UIGraphRefresh()
             UICircleDraw(&UI_Circle_t[3], "sc3", UI_Graph_Change, 9, UI_Color_Orange, 20, 1280, 160, 8);
         }
 
-        // 电容是否工作
-        if (Super_condition == 0) {
-            UICircleDraw(&UI_Circle_t[4], "sc4", UI_Graph_Change, 9, UI_Color_Green, 20, 580, 160, 8);
-        } else {
-            UICircleDraw(&UI_Circle_t[4], "sc4", UI_Graph_Change, 9, UI_Color_White, 20, 580, 160, 8);
-        }
 
-        // 电容
-        UILineDraw(&UI_Energy[1], "sn1", UI_Graph_Change, 9, UI_Color_Green, 20, 80, 720, (uint32_t)((Super_condition_volt * Super_condition_volt - 144) / 532 * 200 + 80), 720); // 超电电压在12V-26V之间
-
-        UIFloatDraw(&UI_Number_t[0], "sm1", UI_Graph_Change, 9, UI_Color_Yellow, 20, 5, 3, 300 + 100, 700, (uint32_t)(Pitch_Angle * 1000));
         // 云台朝向圆弧,中供弹暂时不需要
         // if (mid_point_angle > 360.0f - arc / 2.0f || mid_point_angle < arc / 2.0f)
         // {

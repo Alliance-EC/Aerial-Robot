@@ -53,36 +53,57 @@ static void sbus_to_rc(const uint8_t *sbus_buf)
 
     //  位域的按键值解算,直接memcpy即可,注意小端低字节在前,即lsb在第一位,msb在最后
     *(uint16_t *)&rc_ctrl[TEMP].key[KEY_PRESS] = (uint16_t)(sbus_buf[14] | (sbus_buf[15] << 8));
-    if (rc_ctrl[TEMP].key[KEY_PRESS].ctrl) // ctrl键按下
-        rc_ctrl[TEMP].key[KEY_PRESS_WITH_CTRL] = rc_ctrl[TEMP].key[KEY_PRESS];
-    else
+
+    if ((rc_ctrl[TEMP].key[KEY_PRESS].ctrl) && (1 - rc_ctrl[TEMP].key[KEY_PRESS].shift)) // ctrl键按下
+    {
+        memcpy(&rc_ctrl[TEMP].key[KEY_PRESS_WITH_CTRL], &rc_ctrl[TEMP].key[KEY_PRESS], sizeof(Key_t));
+        memset(&rc_ctrl[TEMP].key[KEY_PRESS], 0, sizeof(Key_t));
+    } else
         memset(&rc_ctrl[TEMP].key[KEY_PRESS_WITH_CTRL], 0, sizeof(Key_t));
-    if (rc_ctrl[TEMP].key[KEY_PRESS].shift) // shift键按下
-        rc_ctrl[TEMP].key[KEY_PRESS_WITH_SHIFT] = rc_ctrl[TEMP].key[KEY_PRESS];
-    else
+
+    if (((1 - rc_ctrl[TEMP].key[KEY_PRESS].ctrl) && (rc_ctrl[TEMP].key[KEY_PRESS].shift))) // shift键按下
+    {
+        memcpy(&rc_ctrl[TEMP].key[KEY_PRESS_WITH_SHIFT], &rc_ctrl[TEMP].key[KEY_PRESS], sizeof(Key_t));
+        memset(&rc_ctrl[TEMP].key[KEY_PRESS], 0, sizeof(Key_t));
+    } else
         memset(&rc_ctrl[TEMP].key[KEY_PRESS_WITH_SHIFT], 0, sizeof(Key_t));
 
-    uint16_t key_now = rc_ctrl[TEMP].key[KEY_PRESS].keys,                   // 当前按键是否按下
-        key_last = rc_ctrl[LAST].key[KEY_PRESS].keys,                       // 上一次按键是否按下
-        key_with_ctrl = rc_ctrl[TEMP].key[KEY_PRESS_WITH_CTRL].keys,        // 当前ctrl组合键是否按下
-        key_with_shift = rc_ctrl[TEMP].key[KEY_PRESS_WITH_SHIFT].keys,      //  当前shift组合键是否按下
-        key_last_with_ctrl = rc_ctrl[LAST].key[KEY_PRESS_WITH_CTRL].keys,   // 上一次ctrl组合键是否按下
-        key_last_with_shift = rc_ctrl[LAST].key[KEY_PRESS_WITH_SHIFT].keys; // 上一次shift组合键是否按下
-
-    for (uint16_t i = 0, j = 0x1; i < 16; j <<= 1, i++)
+    if ((rc_ctrl[TEMP].key[KEY_PRESS].ctrl) && (rc_ctrl[TEMP].key[KEY_PRESS].shift)) // ctrl+shift键按下
     {
-        if (i == 4 || i == 5) // 4,5位为ctrl和shift,直接跳过
-            continue;
-        // 如果当前按键按下,上一次按键没有按下,且ctrl和shift组合键没有按下,则按键按下计数加1(检测到上升沿)
-        if ((key_now & j) && !(key_last & j) && !(key_with_ctrl & j) && !(key_with_shift & j))
-            rc_ctrl[TEMP].key_count[KEY_PRESS][i]++;
-        // 当前ctrl组合键按下,上一次ctrl组合键没有按下,则ctrl组合键按下计数加1(检测到上升沿)
-        if ((key_with_ctrl & j) && !(key_last_with_ctrl & j))
-            rc_ctrl[TEMP].key_count[KEY_PRESS_WITH_CTRL][i]++;
-        // 当前shift组合键按下,上一次shift组合键没有按下,则shift组合键按下计数加1(检测到上升沿)
-        if ((key_with_shift & j) && !(key_last_with_shift & j))
-            rc_ctrl[TEMP].key_count[KEY_PRESS_WITH_SHIFT][i]++;
-    }
+        memcpy(&rc_ctrl[TEMP].key[KEY_PRESS_WITH_SHIFT_AND_CTRL], &rc_ctrl[TEMP].key[KEY_PRESS], sizeof(Key_t));
+        memset(&rc_ctrl[TEMP].key[KEY_PRESS], 0, sizeof(Key_t));
+    } else
+        memset(&rc_ctrl[TEMP].key[KEY_PRESS_WITH_SHIFT_AND_CTRL], 0, sizeof(Key_t));
+    // if (rc_ctrl[TEMP].key[KEY_PRESS].ctrl) // ctrl键按下
+    //     rc_ctrl[TEMP].key[KEY_PRESS_WITH_CTRL] = rc_ctrl[TEMP].key[KEY_PRESS];
+    // else
+    //     memset(&rc_ctrl[TEMP].key[KEY_PRESS_WITH_CTRL], 0, sizeof(Key_t));
+    // if (rc_ctrl[TEMP].key[KEY_PRESS].shift) // shift键按下
+    //     rc_ctrl[TEMP].key[KEY_PRESS_WITH_SHIFT] = rc_ctrl[TEMP].key[KEY_PRESS];
+    // else
+    //     memset(&rc_ctrl[TEMP].key[KEY_PRESS_WITH_SHIFT], 0, sizeof(Key_t));
+
+    // uint16_t key_now = rc_ctrl[TEMP].key[KEY_PRESS].keys,                   // 当前按键是否按下
+    //     key_last = rc_ctrl[LAST].key[KEY_PRESS].keys,                       // 上一次按键是否按下
+    //     key_with_ctrl = rc_ctrl[TEMP].key[KEY_PRESS_WITH_CTRL].keys,        // 当前ctrl组合键是否按下
+    //     key_with_shift = rc_ctrl[TEMP].key[KEY_PRESS_WITH_SHIFT].keys,      //  当前shift组合键是否按下
+    //     key_last_with_ctrl = rc_ctrl[LAST].key[KEY_PRESS_WITH_CTRL].keys,   // 上一次ctrl组合键是否按下
+    //     key_last_with_shift = rc_ctrl[LAST].key[KEY_PRESS_WITH_SHIFT].keys; // 上一次shift组合键是否按下
+
+    // for (uint16_t i = 0, j = 0x1; i < 16; j <<= 1, i++)
+    // {
+    //     if (i == 4 || i == 5) // 4,5位为ctrl和shift,直接跳过
+    //         continue;
+    //     // 如果当前按键按下,上一次按键没有按下,且ctrl和shift组合键没有按下,则按键按下计数加1(检测到上升沿)
+    //     if ((key_now & j) && !(key_last & j) && !(key_with_ctrl & j) && !(key_with_shift & j))
+    //         rc_ctrl[TEMP].key_count[KEY_PRESS][i]++;
+    //     // 当前ctrl组合键按下,上一次ctrl组合键没有按下,则ctrl组合键按下计数加1(检测到上升沿)
+    //     if ((key_with_ctrl & j) && !(key_last_with_ctrl & j))
+    //         rc_ctrl[TEMP].key_count[KEY_PRESS_WITH_CTRL][i]++;
+    //     // 当前shift组合键按下,上一次shift组合键没有按下,则shift组合键按下计数加1(检测到上升沿)
+    //     if ((key_with_shift & j) && !(key_last_with_shift & j))
+    //         rc_ctrl[TEMP].key_count[KEY_PRESS_WITH_SHIFT][i]++;
+    // }
 
     memcpy(&rc_ctrl[LAST], &rc_ctrl[TEMP], sizeof(RC_ctrl_t)); // 保存上一次的数据,用于按键持续按下和切换的判断
 }
@@ -130,10 +151,6 @@ RC_ctrl_t *RemoteControlInit(UART_HandleTypeDef *rc_usart_handle)
 
 uint8_t RemoteControlIsOnline()
 {
-    // rc_daemon_instance->temp_count--;
-    // if(rc_daemon_instance->temp_count <= 0){
-    //     rc_daemon_instance->temp_count = 0;
-    // }
     if (rc_init_flag)
         return DaemonIsOnline(rc_daemon_instance);
     return 0;

@@ -58,7 +58,7 @@ void GimbalInit()
     // YAW
     Motor_Init_Config_s yaw_config = {
         .can_init_config = {
-            .can_handle = &hcan1,
+            .can_handle = &hcan2,
             .tx_id      = 1,
         },
         .controller_param_init_config = {
@@ -103,9 +103,9 @@ void GimbalInit()
         },
         .controller_param_init_config = {
             .angle_PID = {
-                .Kp            = 110, // 150
+                .Kp            = 150, // 150
                 .Ki            = 50,  // 1
-                .Kd            = 2, // 3
+                .Kd            = 3, // 3
                 .Improve       = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_ChangingIntegrationRate,
                 .CoefA         = 0.2,
                 .CoefB         = 0.001,

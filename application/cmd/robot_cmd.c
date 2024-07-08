@@ -18,9 +18,9 @@
 
 
 #define YAW_ANGLE_MAX 49
-#define YAW_ANGLE_MIN -100
-#define PITCH_ANGLE_MAX 105
-#define PITCH_ANGLE_MIN 85
+#define YAW_ANGLE_MIN -105
+#define PITCH_ANGLE_MAX -8
+#define PITCH_ANGLE_MIN -35
 
 #if PITCH_FEED_TYPE                                                  // Pitch 电机反馈数据源为陀螺仪
 #define PTICH_HORIZON_ANGLE 0                                        // PITCH水平时电机的角度
@@ -73,6 +73,8 @@ auto_shoot_mode_e AutoShooting_flag = AutoShooting_Off; // 自动射击标志位
 extern char Send_Once_Flag;                             // 初始化UI标志
 extern float Yaw_Angle;
 extern float Pitch_Angle; // 云台Pitch轴角度
+float limit_yaw_max = YAW_ANGLE_MAX, limit_yaw_min = YAW_ANGLE_MIN;
+float limit_pitch_max = PITCH_ANGLE_MAX, limit_pitch_min = PITCH_ANGLE_MIN;
 
 int remote_work_condition = 0; // 遥控器是否离线判断
 
@@ -94,7 +96,6 @@ void HOST_RECV_CALLBACK()
 }
 void RobotCMDInit()
 {
-    shoot_cmd_send.delta_angle_abs=10;
 
     rc_data                = RemoteControlInit(&huart3); // 修改为对应串口,注意如果是自研板dbus协议串口需选用添加了反相器的那个
     HostInstanceConf host_conf = {
@@ -120,31 +121,6 @@ void RobotCMDInit()
 
 float yaw_control;   // 遥控器YAW自由度输入值
 float pitch_control; // 遥控器PITCH自由度输入值
-float limit_yaw_max, limit_yaw_min;
-float limit_pitch_max,limit_pitch_min;
-/**
- * @brief 对Pitch轴角度变化进行限位
- *
- */
-static void Gimabl_Angel_Limit()
-{
-    limit_yaw_max = YAW_ANGLE_MAX;
-    limit_yaw_min = YAW_ANGLE_MIN;
-    limit_pitch_max     = PITCH_ANGLE_MAX;
-    limit_pitch_min     = PITCH_ANGLE_MIN;
-
-    //用编码器值判断yaw是否到达机械限位
-    // if (gimbal_fetch_data.yaw_motor->measure.total_angle +shoot_cmd_send.delta_angle_abs > limit_yaw_max) {
-    //     gimbal_cmd_send.gimbal_yaw_max = TRUE;
-    // } else if (gimbal_fetch_data.yaw_motor->measure.total_angle - shoot_cmd_send.delta_angle_abs < limit_yaw_min) {
-    //     gimbal_cmd_send.gimbal_yaw_min = TRUE;
-    // } else {
-    //     gimbal_cmd_send.gimbal_yaw_max = FALSE;
-    //     gimbal_cmd_send.gimbal_yaw_min  = FALSE;
-    // }
-
-    
-}
 
 /**
  * @brief 控制输入为遥控器(调试时)的模式和控制量设置
@@ -165,7 +141,7 @@ static void RC_CONTROL_MODE()
 
             // 使用相对角度控制
             memcpy(&rec_yaw, vision_recv_data, sizeof(float));
-        memcpy(&rec_pitch, vision_recv_data + 4, sizeof(float));
+            memcpy(&rec_pitch, vision_recv_data + 4, sizeof(float));
             if ((rec_yaw == 0 && rec_pitch == 0) || vision_recv_data[8] == 0) {
                 // 视觉未识别到目标,纯遥控器拨杆控制
                 // 按照摇杆的输出大小进行角度增量,增益系数需调整
@@ -184,7 +160,6 @@ static void RC_CONTROL_MODE()
             gimbal_cmd_send.gimbal_mode = GIMBAL_RC_MODE;
             if (switch_is_mid(rc_data[TEMP].rc.switch_right) && switch_is_up(rc_data[TEMP].rc.switch_left)) // 左侧开关状态[上],右侧开关状态[中],底盘和云台分离,摩擦轮启动
             {
-
                 if (rc_data[TEMP].rc.dial > 400) {
                     shoot_cmd_send.load_mode = LOAD_1_BULLET;
                 } else {
@@ -226,12 +201,12 @@ static void PC_CONTROL_MODE()
         } else {
             Shoot_Run_Flag = 0;
         }
+        
         //控制UI
         if (rc_data[TEMP].key[KEY_PRESS].r) {
             Send_Once_Flag = 0; // UI重新发送
         }
 
-        Gimabl_Angel_Limit();
         RobotReset(); // 机器人复位处理
     }
     
@@ -307,7 +282,6 @@ static void Gimbal_control(int mode){
 
     gimbal_cmd_send.yaw   = yaw_control;
     gimbal_cmd_send.pitch = pitch_control;
-    Gimabl_Angel_Limit(); // PITCH限位
 }
 /**
  * @brief 视觉发送任务，将数据发送给上位机
