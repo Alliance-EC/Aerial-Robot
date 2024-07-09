@@ -70,8 +70,9 @@ __attribute__((noreturn)) void _ChassisTask(void *argument)
 {
     for (;;) {
         ChassisTask();
+        My_UIGraphRefresh();
         LOGERROR("_ChassisTask Task Running");
-        osDelay(5);
+        osDelay(50);
     }
 }
 
@@ -105,7 +106,7 @@ __attribute__((noreturn)) void _DaemonTask(void *argument)
 __attribute__((noreturn)) void _My_UIGraphRefresh(void *argument)
 {
     for (;;) {
-        My_UIGraphRefresh();
+        //My_UIGraphRefresh();
         LOGERROR("UI Task Running");
         osDelay(50);
     }

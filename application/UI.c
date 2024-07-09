@@ -60,7 +60,7 @@ int16_t AIM_Rec_Color;
 void My_UIGraphRefresh()
 {
     DeterminRobotID();
-    SubGetMessage(gimbal_feed_sub, &gimbal_fetch_data);
+    //SubGetMessage(gimbal_feed_sub, &gimbal_fetch_data);
 
     // const float arc = 45.0f; // 弧长
     // const uint16_t Mechangle_offset = 10546;
@@ -87,10 +87,10 @@ void My_UIGraphRefresh()
         // 自瞄指示圈
         //UICircleDraw(&UI_Circle_t[5], "sc5", UI_Graph_ADD, 9, UI_Color_White, 2, SCREEN_LENGTH / 2, SCREEN_LENGTH / 2, 250);
         // 位置标定线
-        UILineDraw(&UI_Deriction_line[0], "sq0", UI_Graph_ADD, 6, UI_Color_White, 1, SCREEN_LENGTH / 2 - 22 + 30, SCREEN_WIDTH / 2 - 47, SCREEN_LENGTH / 2 - 22 + 5, SCREEN_WIDTH / 2 - 47);
-        UILineDraw(&UI_Deriction_line[1], "sq1", UI_Graph_ADD, 6, UI_Color_White, 1, SCREEN_LENGTH / 2 - 22, SCREEN_WIDTH / 2 - 47 + 30, SCREEN_LENGTH / 2 - 22, SCREEN_WIDTH / 2 - 47 + 5);
-        UILineDraw(&UI_Deriction_line[2], "sq2", UI_Graph_ADD, 6, UI_Color_White, 1, SCREEN_LENGTH / 2 - 22 - 5, SCREEN_WIDTH / 2 - 47, SCREEN_LENGTH / 2 - 22 - 30, SCREEN_WIDTH / 2 - 47);
-        UILineDraw(&UI_Deriction_line[3], "sq3", UI_Graph_ADD, 6, UI_Color_White, 1, SCREEN_LENGTH / 2 - 22, SCREEN_WIDTH / 2 - 47 - 5, SCREEN_LENGTH / 2 - 22, SCREEN_WIDTH / 2 - 47 - 30);
+        //UILineDraw(&UI_Deriction_line[0], "sq0", UI_Graph_ADD, 6, UI_Color_White, 1, SCREEN_LENGTH / 2 - 22 + 30, SCREEN_WIDTH / 2 - 47, SCREEN_LENGTH / 2 - 22 + 5, SCREEN_WIDTH / 2 - 47);
+        //UILineDraw(&UI_Deriction_line[1], "sq1", UI_Graph_ADD, 6, UI_Color_White, 1, SCREEN_LENGTH / 2 - 22, SCREEN_WIDTH / 2 - 47 + 30, SCREEN_LENGTH / 2 - 22, SCREEN_WIDTH / 2 - 47 + 5);
+        //UILineDraw(&UI_Deriction_line[2], "sq2", UI_Graph_ADD, 6, UI_Color_White, 1, SCREEN_LENGTH / 2 - 22 - 5, SCREEN_WIDTH / 2 - 47, SCREEN_LENGTH / 2 - 22 - 30, SCREEN_WIDTH / 2 - 47);
+        //UILineDraw(&UI_Deriction_line[3], "sq3", UI_Graph_ADD, 6, UI_Color_White, 1, SCREEN_LENGTH / 2 - 22, SCREEN_WIDTH / 2 - 47 - 5, SCREEN_LENGTH / 2 - 22, SCREEN_WIDTH / 2 - 47 - 30);
         // 小陀螺
         // sprintf(UI_State_sta[0].show_Data,"Rotate");
         // UICharDraw(&UI_State_sta[0], "ss0", UI_Graph_ADD, 9, UI_Color_Yellow, 20, 2, 660, 100, "Rotate");
@@ -100,8 +100,8 @@ void My_UIGraphRefresh()
         //  sprintf(UI_State_sta[2].show_Data,"Fric");
         //  UICharDraw(&UI_State_sta[2], "ss2", UI_Graph_ADD, 9, UI_Color_Yellow, 20, 2, 1160,100, "Fric");
         //  UICharRefresh(&referee_info.referee_id, UI_State_sta[2]);
-        UICircleDraw(&UI_Circle_t[2], "sc2", UI_Graph_ADD, 9, UI_Color_White, 20, 1180, 160, 8);  // 摩擦轮是否开启显示
-        UICircleDraw(&UI_Circle_t[3], "sc3", UI_Graph_ADD, 9, UI_Color_Orange, 20, 1280, 160, 8); // 摩擦轮是否正常显示
+        UICircleDraw(&UI_Circle_t[2], "sc2", UI_Graph_ADD, 7, UI_Color_White, 20, 1180, 160, 8);  // 摩擦轮是否开启显示
+        UICircleDraw(&UI_Circle_t[3], "sc3", UI_Graph_ADD, 7, UI_Color_Orange, 20, 1280, 160, 8); // 摩擦轮是否正常显示
 
         //UILineDraw(&UI_Energy[1], "sn1", UI_Graph_ADD, 9, UI_Color_Green, 20, 80, 720, (uint32_t)((Super_condition_volt * Super_condition_volt - 144) / 532 * 400 + 80), 720); // 超电电压在12V-26V之间
         // 初始自瞄框
@@ -140,7 +140,7 @@ void My_UIGraphRefresh()
         // UIGraphRefresh(&referee_info.referee_id, 7, UI_Deriction_line[0], UI_Deriction_line[1], UI_Circle_t[0], UI_Circle_t[1], UI_Circle_t[2], UI_State_sta[5], UI_Rectangle[1]);
         // // UIGraphRefresh(&referee_info.referee_id, 5, UI_Circle_t[0],UI_Circle_t[2],UI_Circle_t[3],UI_Rectangle[1],&UI_Energy[1]);
         // UIGraphRefresh(&referee_info.referee_id, 7, UI_Circle_t[0], UI_Circle_t[2], UI_Circle_t[3], UI_Circle_t[4], UI_Energy[1], UI_Number_t[0], UI_Circle_t[5]);
-        UIGraphRefresh(&referee_info.referee_id,4,UI_Deriction_line[0],UI_Deriction_line[1],UI_Deriction_line[2],UI_Deriction_line[3]);
+        UIGraphRefresh(&referee_info.referee_id,2,UI_Circle_t[2],UI_Circle_t[3]);
     }
 
     // else {
