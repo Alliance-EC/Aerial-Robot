@@ -165,14 +165,16 @@ typedef struct
 } Gimbal_Ctrl_Cmd_s;
 
 typedef struct
-{ // 云台角度控制
-    float yaw;
-    float pitch;
-    int gimbal_yaw_max;
-    int gimbal_yaw_min;
-    int gimbal_pitch_max;
-    int gimbal_pitch_min;
+{ 
     gimbal_mode_e gimbal_mode;
+    DJIMotorInstance * yaw_motor;
+    DJIMotorInstance *pitch_motor;
+    float shoot_rate; // 连续发射的射频,unit per s,发/秒
+    shoot_mode_e shoot_mode;
+    loader_mode_e load_mode;
+    friction_mode_e friction_mode;
+    float yaw_limit;
+    float pitch_limit;
 } Ui_Ctrl_Cmd_s;
 
 // cmd发布的发射控制数据,由shoot订阅
@@ -209,6 +211,17 @@ typedef struct
     // code to go here
     // ...
 } Shoot_Upload_Data_s;
+
+typedef struct
+{ 
+    gimbal_mode_e gimbal_mode;
+    DJIMotorInstance * yaw_motor;
+    DJIMotorInstance *pitch_motor;
+    float shoot_rate; // 连续发射的射频,unit per s,发/秒
+    shoot_mode_e shoot_mode;
+    loader_mode_e load_mode;
+    friction_mode_e friction_mode;
+} Ui_Upload_Data_s;
 
 #pragma pack() // 开启字节对齐,结束前面的#pragma pack(1)
 

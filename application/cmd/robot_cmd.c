@@ -56,6 +56,11 @@ static uint8_t vision_recv_data[9];  // 从视觉上位机接收的数据-绝对
 static uint8_t vision_send_data[23]; // 给视觉上位机发送的数据-四元数
 // 这里的四元数以wxyz的顺序
 
+static Publisher_t *ui_cmd_pub;            // 云台控制消息发布者
+static Ui_Ctrl_Cmd_s ui_cmd_send;      // 传递给云台的控制信息
+static Subscriber_t *ui_feed_sub; // 发射反馈信息订阅者
+static Ui_Upload_Data_s ui_fetch_data; // 从云台获取的反馈信息
+
 static Publisher_t *gimbal_cmd_pub;            // 云台控制消息发布者
 static Subscriber_t *gimbal_feed_sub;          // 云台反馈信息订阅者
 static Gimbal_Ctrl_Cmd_s gimbal_cmd_send;      // 传递给云台的控制信息
@@ -65,7 +70,6 @@ static Publisher_t *shoot_cmd_pub;           // 发射控制消息发布者
 static Subscriber_t *shoot_feed_sub; // 发射反馈信息订阅者
 static Shoot_Ctrl_Cmd_s shoot_cmd_send;      // 传递给发射的控制信息
 static Shoot_Upload_Data_s shoot_fetch_data; // 从发射获取的反馈信息
-
 
 static Robot_Status_e robot_state; // 机器人整体工作状态
 
@@ -80,6 +84,9 @@ float limit_pitch_max = PITCH_ANGLE_MAX, limit_pitch_min = PITCH_ANGLE_MIN;
 int remote_work_condition = 0; // 遥控器是否离线判断
 
 float rec_yaw, rec_pitch;
+
+float pc_limit_yaw=0,pc_limit_pitch=0;
+float rc_limit_yaw=0,rc_limit_pitch=0;
 bool shoot_cmd; // 接受上位机的火控指令
 
 int Cover_Open_Flag; // 弹舱打开标志位
@@ -112,7 +119,8 @@ void RobotCMDInit()
     shoot_cmd_pub   = PubRegister("shoot_cmd", sizeof(Shoot_Ctrl_Cmd_s));
     shoot_feed_sub  = SubRegister("shoot_feed", sizeof(Shoot_Upload_Data_s));
 
-
+    ui_cmd_pub   = PubRegister("ui_cmd", sizeof(Ui_Ctrl_Cmd_s));
+    ui_feed_sub =SubRegister("ui_feed", sizeof(Ui_Upload_Data_s));
 #if PITCH_FEED_TYPE
     gimbal_cmd_send.pitch = 0;
 #else
@@ -195,6 +203,14 @@ static void PC_CONTROL_MODE()
             Send_Once_Flag = 0; // UI重新发送
         }
 
+        if (rc_data[TEMP].key[KEY_PRESS].c){
+            shoot_cmd_send.friction_mode =FRICTION_ON;
+        }
+        if (rc_data[TEMP].key[KEY_PRESS_WITH_SHIFT].c){
+            shoot_cmd_send.friction_mode =FRICTION_OFF;
+        }
+        
+
         RobotReset(); // 机器人复位处理
     }
     
@@ -218,30 +234,11 @@ static void RobotReset()
  */
 void UpDateUI()
 {
-    // 更新UI数据
-
-    Referee_Interactive_info.gimbal_mode   = gimbal_cmd_send.gimbal_mode;
-    Referee_Interactive_info.friction_mode = shoot_cmd_send.friction_mode;
-    Referee_Interactive_info.shoot_mode    = shoot_cmd_send.shoot_mode;
-    Referee_Interactive_info.lid_mode      = shoot_cmd_send.lid_mode;
-
-    // 保存上一次的UI数据
-
-    Referee_Interactive_info.gimbal_last_mode        = Referee_Interactive_info.gimbal_mode;
-    Referee_Interactive_info.shoot_last_mode         = Referee_Interactive_info.shoot_mode;
-    Referee_Interactive_info.friction_last_mode      = Referee_Interactive_info.friction_mode;
-    Referee_Interactive_info.lid_last_mode           = Referee_Interactive_info.lid_mode;
-
-
-
-
-    if (rc_data[TEMP].mouse.press_r && vision_recv_data[8] == 1) {
-        AutoShooting_flag = AutoShooting_Find;
-    } else if (rc_data[TEMP].mouse.press_r && vision_recv_data[8] != 1) {
-        AutoShooting_flag = AutoShooting_Open;
-    } else {
-        AutoShooting_flag = AutoShooting_Off;
-    }
+    ui_cmd_send.yaw_motor=gimbal_fetch_data.yaw_motor;
+    ui_cmd_send.pitch_motor=gimbal_fetch_data.pitch_motor;
+    ui_cmd_send.yaw_limit=pc_limit_yaw;
+    ui_cmd_send.pitch_limit=pc_limit_pitch;
+    ui_cmd_send.friction_mode=shoot_cmd_send.friction_mode;
 }
 
 static void Shoot_control(){
@@ -256,8 +253,10 @@ static void Shoot_control(){
 static void Gimbal_control(int mode){
 //键鼠控制
     if (mode ==GIMBAL_PC_MODE){
-        yaw_control += rc_data[TEMP].mouse.x / 200.0f * brake_calc(limit_yaw_max, 20, gimbal_fetch_data.yaw_motor->measure.total_angle, limit_yaw_min, rc_data[TEMP].mouse.x);
-        pitch_control -= rc_data[TEMP].mouse.y / 15000.0f * brake_calc(limit_pitch_max, 5, gimbal_fetch_data.pitch_motor->measure.total_angle, limit_pitch_min, -rc_data[TEMP].mouse.y);
+        pc_limit_yaw=brake_calc(limit_yaw_max, 20, gimbal_fetch_data.yaw_motor->measure.total_angle, limit_yaw_min, -rc_data[TEMP].mouse.x);
+        pc_limit_pitch=brake_calc(limit_pitch_max, 5, gimbal_fetch_data.pitch_motor->measure.total_angle, limit_pitch_min, rc_data[TEMP].mouse.y);
+        yaw_control -= rc_data[TEMP].mouse.x / 200.0f*pc_limit_yaw;
+        pitch_control += rc_data[TEMP].mouse.y / 15000.0f*pc_limit_pitch;
     }
 //遥控器控制
     else if (mode == GIMBAL_RC_MODE){
@@ -266,8 +265,10 @@ static void Gimbal_control(int mode){
         // } else {
         //     ramp_init(&yaw_limit_ramp, 20);
         // }
-        yaw_control -= 0.0012f * (float)rc_data[TEMP].rc.rocker_l_ * brake_calc(limit_yaw_max, 10, gimbal_fetch_data.yaw_motor->measure.total_angle, limit_yaw_min, (float)rc_data[TEMP].rc.rocker_l_*(-1));
-        pitch_control -= 0.00002f * (float)rc_data[TEMP].rc.rocker_l1 * brake_calc(limit_pitch_max, 5, gimbal_fetch_data.pitch_motor->measure.total_angle, limit_pitch_min, -(float)rc_data[TEMP].rc.rocker_l1);
+        rc_limit_yaw=brake_calc(limit_yaw_max, 10, gimbal_fetch_data.yaw_motor->measure.total_angle, limit_yaw_min, (float)rc_data[TEMP].rc.rocker_l_*(-1));
+        rc_limit_pitch=brake_calc(limit_pitch_max, 5, gimbal_fetch_data.pitch_motor->measure.total_angle, limit_pitch_min, -(float)rc_data[TEMP].rc.rocker_l1);
+        yaw_control -= 0.0012f * (float)rc_data[TEMP].rc.rocker_l_ * rc_limit_yaw;
+        pitch_control -= 0.00002f * (float)rc_data[TEMP].rc.rocker_l1*rc_limit_pitch;
         ;
 
     }
@@ -350,6 +351,7 @@ void RobotCMDTask()
 #endif // GIMBAL_BOARD
     PubPushMessage(shoot_cmd_pub, (void *)&shoot_cmd_send);
     PubPushMessage(gimbal_cmd_pub, (void *)&gimbal_cmd_send);
+    PubPushMessage(ui_cmd_pub, (void *)&ui_cmd_send);
     VisionTask();
     }
 

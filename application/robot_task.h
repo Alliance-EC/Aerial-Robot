@@ -72,7 +72,7 @@ __attribute__((noreturn)) void _ChassisTask(void *argument)
         ChassisTask();
         My_UIGraphRefresh();
         LOGERROR("_ChassisTask Task Running");
-        osDelay(50);
+        osDelay(30);
     }
 }
 

@@ -9,12 +9,12 @@
 #include "gimbal.h"
 #include "dji_motor.h"
 #include "super_cap.h"
+#include "robot_def.h"
 
-static Subscriber_t *gimbal_feed_sub;          // 云台反馈信息订阅者
-static Gimbal_Upload_Data_s gimbal_fetch_data; // 从云台获取的反馈信息
+#define PITCH_ZERO 30.368
+static Subscriber_t *ui_sub;
 
-static Subscriber_t *shoot_feed_sub;                         // 发射反馈信息订阅者
-static Shoot_Upload_Data_s shoot_fetch_data;                 // 从发射获取的反馈信息
+static Ui_Ctrl_Cmd_s ui_cmd_recv;                         // 发射反馈信息订阅者
 
 
 extern referee_info_t referee_info;                         // 裁判系统数据
@@ -63,16 +63,14 @@ int16_t AIM_Rect_half_length = 50;
 int16_t AIM_Rec_Color;
 
 void ui_init(){
-
+    ui_sub = SubRegister("ui_cmd", sizeof(Ui_Ctrl_Cmd_s));
 }
 
 void My_UIGraphRefresh()
 {
-
-    SubGetMessage(gimbal_feed_sub, &gimbal_fetch_data);
-    SubGetMessage(shoot_feed_sub, &shoot_fetch_data);
-
     DeterminRobotID();
+    SubGetMessage(ui_sub, &ui_cmd_recv);
+    // SubGetMessage(shoot_feed_sub, &shoot_fetch_data);
 
     // const float arc = 45.0f; // 弧长
     // const uint16_t Mechangle_offset = 10546;
@@ -83,18 +81,18 @@ void My_UIGraphRefresh()
     if (Send_Once_Flag == 0) {
         Send_Once_Flag = 1;
         // 清空UI          GameRobotState
-        // UIDelete(&referee_info.referee_id, UI_Data_Del_ALL, 9);
-        // UIDelete(&referee_info.referee_id, UI_Data_Del_ALL, 8);
-        // UIDelete(&referee_info.referee_id, UI_Data_Del_ALL, 7);
-        // UIDelete(&referee_info.referee_id, UI_Data_Del_ALL, 6);
+        UIDelete(&referee_info.referee_id, UI_Data_Del_ALL, 9);
+        UIDelete(&referee_info.referee_id, UI_Data_Del_ALL, 8);
+        UIDelete(&referee_info.referee_id, UI_Data_Del_ALL, 7);
+        UIDelete(&referee_info.referee_id, UI_Data_Del_ALL, 6);
         // 射击准点
         // 射击线
-        //  UILineDraw(&UI_shoot_line[0], "sl0", UI_Graph_ADD, 7, UI_Color_Yellow, 1, SCREEN_LENGTH/2,SCREEN_WIDTH/2,SCREEN_LENGTH/2,SCREEN_WIDTH/2-500);
-        //  UILineDraw(&UI_shoot_line[2], "sl2", UI_Graph_ADD, 7, UI_Color_Yellow, 1,SCREEN_LENGTH/2-80,SCREEN_WIDTH/2-90,SCREEN_LENGTH/2+80,SCREEN_WIDTH/2-90);
-        //  UILineDraw(&UI_shoot_line[4], "sl4", UI_Graph_ADD, 7, UI_Color_Yellow, 1,SCREEN_LENGTH/2-40,SCREEN_WIDTH/2-220,SCREEN_LENGTH/2+40,SCREEN_WIDTH/2-220);
-        //  UILineDraw(&UI_shoot_line[5], "sl5", UI_Graph_ADD, 7, UI_Color_Yellow, 1, SCREEN_LENGTH / 2, SCREEN_WIDTH / 2 + 20, SCREEN_LENGTH / 2, SCREEN_WIDTH / 2 - 210);
-        //  UILineDraw(&UI_shoot_line[7], "sl7", UI_Graph_ADD, 7, UI_Color_Yellow, 1,SCREEN_LENGTH/2-90,SCREEN_WIDTH/2-40,SCREEN_LENGTH/2+90,SCREEN_WIDTH/2-40);
-        //  UILineDraw(&UI_shoot_line[8], "sl8", UI_Graph_ADD, 7, UI_Color_Yellow, 1,SCREEN_LENGTH/2-70,SCREEN_WIDTH/2-120,SCREEN_LENGTH/2+70,SCREEN_WIDTH/2-120);
+        //  UILineDraw(&UI_shoot_line[0], "sl0", UI_Graph_ADD, 7, UI_Color_Cyan, 1, SCREEN_LENGTH/2,SCREEN_WIDTH/2,SCREEN_LENGTH/2,SCREEN_WIDTH/2-500);
+        //  UILineDraw(&UI_shoot_line[2], "sl2", UI_Graph_ADD, 7, UI_Color_Cyan, 1,SCREEN_LENGTH/2-80,SCREEN_WIDTH/2-90,SCREEN_LENGTH/2+80,SCREEN_WIDTH/2-90);
+        //  UILineDraw(&UI_shoot_line[4], "sl4", UI_Graph_ADD, 7, UI_Color_Cyan, 1,SCREEN_LENGTH/2-40,SCREEN_WIDTH/2-220,SCREEN_LENGTH/2+40,SCREEN_WIDTH/2-220);
+        //  UILineDraw(&UI_shoot_line[5], "sl5", UI_Graph_ADD, 7, UI_Color_Cyan, 1, SCREEN_LENGTH / 2, SCREEN_WIDTH / 2 + 20, SCREEN_LENGTH / 2, SCREEN_WIDTH / 2 - 210);
+        //  UILineDraw(&UI_shoot_line[7], "sl7", UI_Graph_ADD, 7, UI_Color_Cyan, 1,SCREEN_LENGTH/2-90,SCREEN_WIDTH/2-40,SCREEN_LENGTH/2+90,SCREEN_WIDTH/2-40);
+        //  UILineDraw(&UI_shoot_line[8], "sl8", UI_Graph_ADD, 7, UI_Color_Cyan, 1,SCREEN_LENGTH/2-70,SCREEN_WIDTH/2-120,SCREEN_LENGTH/2+70,SCREEN_WIDTH/2-120);
 
         // 自瞄指示圈
         //UICircleDraw(&UI_Circle_t[5], "sc5", UI_Graph_ADD, 9, UI_Color_White, 2, SCREEN_LENGTH / 2, SCREEN_LENGTH / 2, 250);
@@ -105,17 +103,15 @@ void My_UIGraphRefresh()
         //UILineDraw(&UI_Deriction_line[3], "sq3", UI_Graph_ADD, 6, UI_Color_White, 1, SCREEN_LENGTH / 2 - 22, SCREEN_WIDTH / 2 - 47 - 5, SCREEN_LENGTH / 2 - 22, SCREEN_WIDTH / 2 - 47 - 30);
 
         // sprintf(UI_State_sta[0].show_Data,"Pitch");
-        // UICharDraw(&UI_State_sta[0], "ss0", UI_Graph_ADD, 9, UI_Color_Yellow, 20, 2, 660, 100, "Pitch");
+        // UICharDraw(&UI_State_sta[0], "ss0", UI_Graph_ADD, 9, UI_Color_Cyan, 20, 2, 660, 100, "Pitch");
         // UICharRefresh(&referee_info.referee_id,UI_State_sta[0]);
 
-
-        UICircleDraw(&UI_Circle_t[0], "sc0", UI_Graph_ADD, 9, UI_Color_White, 20, 700, 160, 8);
         // 摩擦轮
         //  sprintf(UI_State_sta[2].show_Data,"Fric");
-        //  UICharDraw(&UI_State_sta[2], "ss2", UI_Graph_ADD, 9, UI_Color_Yellow, 20, 2, 1160,100, "Fric");
+        //  UICharDraw(&UI_State_sta[2], "ss2", UI_Graph_ADD, 9, UI_Color_Cyan, 20, 2, 1160,100, "Fric");
         //  UICharRefresh(&referee_info.referee_id, UI_State_sta[2]);
-        UICircleDraw(&UI_Circle_t[2], "sc2", UI_Graph_ADD, 7, UI_Color_White, 20, 1180, 160, 8);  // 摩擦轮是否开启显示
-        UICircleDraw(&UI_Circle_t[3], "sc3", UI_Graph_ADD, 7, UI_Color_Orange, 20, 1280, 160, 8); // 摩擦轮是否正常显示
+        UICircleDraw(&UI_Circle_t[2], "sc2", UI_Graph_ADD, 7, UI_Color_White, 30, 1180, 160, 8);  // 摩擦轮是否开启显示
+        UICircleDraw(&UI_Circle_t[3], "sc3", UI_Graph_ADD, 7, UI_Color_White, 30, 1280, 160, 8); // 摩擦轮是否正常显示
 
 
         //UILineDraw(&UI_Energy[1], "sn1", UI_Graph_ADD, 9, UI_Color_Green, 20, 80, 720, (uint32_t)((Super_condition_volt * Super_condition_volt - 144) / 532 * 400 + 80), 720); // 超电电压在12V-26V之间
@@ -123,11 +119,11 @@ void My_UIGraphRefresh()
         /*
         if((NUC_Data.yaw_offset==0) & (NUC_Data.pit_offset==0))
         {
-            UIRectangleDraw(&UI_Rectangle[2],"sr2",UI_Graph_ADD,9,(int)AIM_Rec_Color+1,2,960,540,961,541);
+      UIRectangleDraw(&UI_Rectangle[2],"sr2",UI_Graph_ADD,9,(int)AIM_Rec_Color+1,2,960,540,961,541);
         }
         else
         {
-            UIRectangleDraw(&UI_Rectangle[2],"sr2",UI_Graph_ADD,9,(int)AIM_Rec_Color+1,2,AIM_Rect_X-AIM_Rect_half_length,AIM_Rect_Y-AIM_Rect_half_length,AIM_Rect_X+AIM_Rect_half_length,AIM_Rect_Y+AIM_Rect_half_length);
+        IRectangleDraw(&UI_Rectangle[2],"sr2",UI_Graph_ADD,9,(int)AIM_Rec_Color+1,2,AIM_Rect_X-AIM_Rect_half_length,AIM_Rect_Y-AIM_Rect_half_length,AIM_Rect_X+AIM_Rect_half_length,AIM_Rect_Y+AIM_Rect_half_length);
         }
         */
 
@@ -144,10 +140,17 @@ void My_UIGraphRefresh()
         // }
         // pitch角度
         sprintf(UI_State_sta[4].show_Data, "Pitch");
-        UICharDraw(&UI_State_sta[4], "ss4", UI_Graph_ADD, 7, UI_Color_Yellow, 20, 2, 300, 700, "Pitch");
+        UICharDraw(&UI_State_sta[4], "ss4", UI_Graph_ADD, 7, UI_Color_Cyan, 20, 2, 300, 700, "Pitch");
         UICharRefresh(&referee_info.referee_id, UI_State_sta[4]);
 
-        UIFloatDraw(&UI_Number_t[0], "sm1", UI_Graph_ADD, 7, UI_Color_Yellow, 20, 5, 3, 300 + 100, 700,gimbal_fetch_data.pitch_motor->measure.total_angle);
+        UIFloatDraw(&UI_Number_t[0], "sm1", UI_Graph_ADD, 7, UI_Color_White, 20, 5, 3, 300 + 100, 700,(ui_cmd_recv.pitch_motor->measure.total_angle+PITCH_ZERO)*1000);
+
+        // yaw角度
+        sprintf(UI_State_sta[3].show_Data, "Yaw");
+        UICharDraw(&UI_State_sta[3], "ss2", UI_Graph_ADD, 7, UI_Color_Cyan, 20, 2, 300, 700-100, "Yaw");
+        UICharRefresh(&referee_info.referee_id, UI_State_sta[3]);
+
+        UIFloatDraw(&UI_Number_t[1], "sm2", UI_Graph_ADD, 7, UI_Color_White, 20, 5, 3, 300 + 100, 700-100,(int)(ui_cmd_recv.yaw_motor->measure.total_angle)*1000);
 
         // 射击准点
         // UIGraphRefresh(&referee_info.referee_id, 7, UI_Deriction_line[0], UI_Deriction_line[1], UI_Deriction_line[2], UI_Deriction_line[3], UI_State_sta[0], UI_State_sta[2], UI_State_sta[4]);
@@ -156,9 +159,38 @@ void My_UIGraphRefresh()
         // // UIGraphRefresh(&referee_info.referee_id, 5, UI_Circle_t[0],UI_Circle_t[2],UI_Circle_t[3],UI_Rectangle[1],&UI_Energy[1]);
         // UIGraphRefresh(&referee_info.referee_id, 7, UI_Circle_t[0], UI_Circle_t[2], UI_Circle_t[3], UI_Circle_t[4], UI_Energy[1], UI_Number_t[0], UI_Circle_t[5]);
         UIGraphRefresh(&referee_info.referee_id,2,UI_Circle_t[2],UI_Circle_t[3]);
+        UIGraphRefresh(&referee_info.referee_id,2,UI_Number_t[0],UI_Number_t[1]);
     }
 
-    // else {
+    else {
+        //pitch
+        if (ui_cmd_recv.pitch_limit==0){
+        UIFloatDraw(&UI_Number_t[0], "sm1", UI_Graph_Change, 7, UI_Color_Purplish_red, 20, 5, 3, 300 + 100, 700,(ui_cmd_recv.pitch_motor->measure.total_angle+PITCH_ZERO)*1000);
+        }
+        else {
+        UIFloatDraw(&UI_Number_t[0], "sm1", UI_Graph_Change, 7, UI_Color_White, 20, 5, 3, 300 + 100, 700,(ui_cmd_recv.pitch_motor->measure.total_angle+PITCH_ZERO)*1000);
+        }
+         // yaw角度
+        if (ui_cmd_recv.yaw_limit == 0){
+        UIFloatDraw(&UI_Number_t[1], "sm2", UI_Graph_Change, 7, UI_Color_Purplish_red, 20, 5, 3, 300 + 100, 700-100,(int)(ui_cmd_recv.yaw_motor->measure.total_angle)*1000);
+        }
+        else {
+        UIFloatDraw(&UI_Number_t[1], "sm2", UI_Graph_Change, 7, UI_Color_White, 20, 5, 3, 300 + 100, 700-100,(int)(ui_cmd_recv.yaw_motor->measure.total_angle)*1000);
+        }
+        UIGraphRefresh(&referee_info.referee_id,2,UI_Number_t[0],UI_Number_t[1]);
+        
+        
+        //摩擦轮
+        if (ui_cmd_recv.friction_mode == FRICTION_ON){
+        UICircleDraw(&UI_Circle_t[2], "sc2", UI_Graph_Change, 7, UI_Color_Cyan, 30, 1180, 160, 8);  // 摩擦轮是否开启显示
+        UICircleDraw(&UI_Circle_t[3], "sc3", UI_Graph_Change, 7, UI_Color_Cyan, 30, 1280, 160, 8); // 摩擦轮是否正常显示
+        }
+        else {
+        UICircleDraw(&UI_Circle_t[2], "sc2", UI_Graph_Change, 7, UI_Color_White, 30, 1180, 160, 8);  // 摩擦轮是否开启显示
+        UICircleDraw(&UI_Circle_t[3], "sc3", UI_Graph_Change, 7, UI_Color_White, 30, 1280, 160, 8); // 摩擦轮是否正常显示
+        }
+        UIGraphRefresh(&referee_info.referee_id,2,UI_Circle_t[2],UI_Circle_t[3]);
+        
     //     // 自瞄指示圈
     //     if (AutoShooting_flag == AutoShooting_Find) {
     //         UICircleDraw(&UI_Circle_t[5], "sc5", UI_Graph_Change, 9, UI_Color_Green, 2, SCREEN_LENGTH / 2, SCREEN_LENGTH / 2, 250);
@@ -217,6 +249,6 @@ void My_UIGraphRefresh()
 
     //     // 发送4个指示圈+超电剩余电压条
     //     UIGraphRefresh(&referee_info.referee_id, 7, UI_Circle_t[0], UI_Circle_t[2], UI_Circle_t[3], UI_Circle_t[4], UI_Number_t[0], UI_Circle_t[5], UI_Energy[1]);
-    // }
+    }
 }
 

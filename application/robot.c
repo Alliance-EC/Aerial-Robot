@@ -52,6 +52,7 @@ void RobotInit()
 
 #if defined(ONE_BOARD) || defined(CHASSIS_BOARD)
     ChassisInit();
+    ui_init();
     buzzer_one_note(So_freq, 0.1f);
 #endif
 
