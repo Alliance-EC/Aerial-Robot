@@ -148,7 +148,7 @@ static void RC_CONTROL_MODE()
     // 左侧开关为[上]右侧开关为[下]，且接收到上位机的相对角度,视觉模式
     if ((switch_is_down(rc_data[TEMP].rc.switch_right) && switch_is_up(rc_data[TEMP].rc.switch_left))) {
             shoot_cmd_send.friction_mode = FRICTION_OFF;
-            Shoot_control();
+            Shoot_control(gimbal_cmd_send.gimbal_mode);
             gimbal_cmd_send.gimbal_mode = GIMBAL_VISION_MODE;
 
             // 使用相对角度控制
@@ -167,7 +167,7 @@ static void RC_CONTROL_MODE()
             if (switch_is_mid(rc_data[TEMP].rc.switch_right) && switch_is_up(rc_data[TEMP].rc.switch_left)) // 左侧开关状态[上],右侧开关状态[中],底盘和云台分离,摩擦轮启动
             {
                 shoot_cmd_send.friction_mode = FRICTION_ON;
-                Shoot_control();
+                Shoot_control(gimbal_cmd_send.gimbal_mode);
             } 
         }
     }
@@ -209,8 +209,8 @@ static void PC_CONTROL_MODE()
         if (rc_data[TEMP].key[KEY_PRESS_WITH_SHIFT].c){
             shoot_cmd_send.friction_mode =FRICTION_OFF;
         }
-        
 
+        Shoot_control(gimbal_cmd_send.gimbal_mode);
         RobotReset(); // 机器人复位处理
     }
     
@@ -239,15 +239,27 @@ void UpDateUI()
     ui_cmd_send.yaw_limit=pc_limit_yaw;
     ui_cmd_send.pitch_limit=pc_limit_pitch;
     ui_cmd_send.friction_mode=shoot_cmd_send.friction_mode;
+    ui_cmd_send.load_mode    = shoot_cmd_send.load_mode;
 }
 
-static void Shoot_control(){
+static void Shoot_control(int mode){
+    if (mode == GIMBAL_RC_MODE){
     if (rc_data[TEMP].rc.dial > 440) {
         shoot_cmd_send.load_mode = LOAD_BURSTFIRE;
     } else if (rc_data[TEMP].rc.dial < -440) {
         shoot_cmd_send.load_mode = LOAD_1_BULLET;
     } else {
         shoot_cmd_send.load_mode = LOAD_STOP;
+    }
+    }
+
+    else if (mode == GIMBAL_PC_MODE){
+        if (rc_data[TEMP].mouse.press_l){
+            shoot_cmd_send.load_mode = LOAD_BURSTFIRE;
+        }
+        else {
+            shoot_cmd_send.load_mode = LOAD_STOP;
+        }
     }
 }
 static void Gimbal_control(int mode){

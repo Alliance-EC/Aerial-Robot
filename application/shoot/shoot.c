@@ -84,7 +84,7 @@ void ShootInit()
             .speed_PID = {
                 .Kp            = 2.0, // 10
                 .Ki            = 0,  // 0.5, // 1
-                .Kd            = 0,
+                .Kd            = 0.01,
                 .Improve       = PID_Integral_Limit ,
                 .IntegralLimit = 5000,
                 .MaxOut        = 10000,
@@ -132,7 +132,7 @@ static void ShootCtrl(){
     else{
         Block_Time = 0;
     }
-    if(Block_Time >= 1000){
+    if(Block_Time >= 300){
         loder_reverse = -1;
     }
     else{
