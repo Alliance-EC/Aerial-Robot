@@ -31,8 +31,16 @@ static Graph_Data_t UI_Number_t[10];      // 数字
 static String_Data_t UI_State_sta[10];    // 机器人状态,静态只需画一次
 // static String_Data_t UI_State_dyn[6];							// 机器人状态,动态先add才能change
 
-static Subscriber_t *gimbal_feed_sub;          // 云台反馈信息订阅者
-static Gimbal_Upload_Data_s gimbal_fetch_data; // 从云台获取的反馈信息
+
+static uint16_t Gimbal_start_x;
+static uint16_t Gimbal_start_y;
+static uint16_t shoot_fric_x;
+static uint16_t shoot_fric_y;
+static uint16_t shoot_loader_x;
+static uint16_t shoot_loader_y;
+static uint16_t shoot_loader_del_x;
+static uint16_t shoot_loader_del_y;
+
 
 uint8_t Super_condition;    // 超电的开关状态
 float Super_condition_volt; // 超电的电压
@@ -57,13 +65,20 @@ static void DeterminRobotID()
 }
 
 char Send_Once_Flag = 0; // 初始化标志
-uint32_t Rect_De[4] = {1540, 555, 1660, 645};
-int16_t AIM_Rect_X, AIM_Rect_Y; // 自瞄框中心点的坐标信息
-int16_t AIM_Rect_half_length = 50;
-int16_t AIM_Rec_Color;
+
 
 void ui_init(){
     ui_sub = SubRegister("ui_cmd", sizeof(Ui_Ctrl_Cmd_s));
+    //云台ui绝对位置
+    Gimbal_start_x=300;
+    Gimbal_start_y=700;
+    // 摩擦轮ui绝对位置
+    shoot_fric_x  = 1180;
+    shoot_fric_y  = 160;
+    //拨弹盘ui绝对位置
+    shoot_loader_x=980;
+    shoot_loader_y=540;
+    shoot_loader_del_x=10;
 }
 
 void My_UIGraphRefresh()
@@ -107,16 +122,26 @@ void My_UIGraphRefresh()
         // UICharRefresh(&referee_info.referee_id,UI_State_sta[0]);
 
         // 摩擦轮
-        //  sprintf(UI_State_sta[2].show_Data,"Fric");
-        //  UICharDraw(&UI_State_sta[2], "ss2", UI_Graph_ADD, 9, UI_Color_Cyan, 20, 2, 1160,100, "Fric");
-        //  UICharRefresh(&referee_info.referee_id, UI_State_sta[2]);
-        UICircleDraw(&UI_Circle_t[2], "sc2", UI_Graph_ADD, 7, UI_Color_White, 30, 1180, 160, 8);  // 摩擦轮是否开启显示
-        UICircleDraw(&UI_Circle_t[3], "sc3", UI_Graph_ADD, 7, UI_Color_White, 30, 1280, 160, 8); // 摩擦轮是否正常显示
+        UICircleDraw(&UI_Circle_t[2], "sc2", UI_Graph_ADD, 7, UI_Color_White, 30, shoot_fric_x, shoot_fric_y, 8); // 摩擦轮是否开启显示
+        UICircleDraw(&UI_Circle_t[3], "sc3", UI_Graph_ADD, 7, UI_Color_White, 30, shoot_fric_x + 100, shoot_fric_y, 8); // 摩擦轮是否正常显示
 
+        //拨弹盘
+        sprintf(UI_State_sta[2].show_Data, "Loader");
+        UICharDraw(&UI_State_sta[2], "ss2", UI_Graph_ADD, 7, UI_Color_Cyan, 20, 4, shoot_loader_x-100, shoot_loader_y-30, "Loader");
+        UICharRefresh(&referee_info.referee_id, UI_State_sta[2]);
 
-        //UILineDraw(&UI_Energy[1], "sn1", UI_Graph_ADD, 9, UI_Color_Green, 20, 80, 720, (uint32_t)((Super_condition_volt * Super_condition_volt - 144) / 532 * 400 + 80), 720); // 超电电压在12V-26V之间
-        // 初始自瞄框
+        UIRectangleDraw(&UI_Rectangle[0], "sr0", UI_Graph_ADD, 9, UI_Color_White, 10, shoot_loader_x, shoot_loader_y, shoot_loader_x + 10, shoot_loader_y + 10);
+        UIRectangleDraw(&UI_Rectangle[1], "sr1", UI_Graph_ADD, 9, UI_Color_White, 10, shoot_loader_x+40, shoot_loader_y, shoot_loader_x + 50, shoot_loader_y + 10);
+        UIRectangleDraw(&UI_Rectangle[2], "sr2", UI_Graph_ADD, 9, UI_Color_White, 10, shoot_loader_x +80, shoot_loader_y, shoot_loader_x + 90, shoot_loader_y + 10);
+
+        UIRectangleDraw(&UI_Rectangle[3], "sr3", UI_Graph_ADD, 9, UI_Color_White, 10, shoot_loader_x-10, shoot_loader_y, shoot_loader_x +20, shoot_loader_y-50);
+        UIRectangleDraw(&UI_Rectangle[4], "sr4", UI_Graph_ADD, 9, UI_Color_White, 10, shoot_loader_x + 30, shoot_loader_y, shoot_loader_x + 60, shoot_loader_y -50);
+        UIRectangleDraw(&UI_Rectangle[5], "sr5", UI_Graph_ADD, 9, UI_Color_White, 10, shoot_loader_x + 70, shoot_loader_y, shoot_loader_x + 100, shoot_loader_y -50);
+
+        // UILineDraw(&UI_Energy[1], "sn1", UI_Graph_ADD, 9, UI_Color_Green, 20, 80, 720, (uint32_t)((Super_condition_volt * Super_condition_volt - 144) / 532 * 400 + 80), 720); // 超电电压在12V-26V之间
+        //  初始自瞄框
         /*
+        if((NUC_Data.yaw_offset==0) & (NUC_Data.pit_offset==0))
         if((NUC_Data.yaw_offset==0) & (NUC_Data.pit_offset==0))
         {
       UIRectangleDraw(&UI_Rectangle[2],"sr2",UI_Graph_ADD,9,(int)AIM_Rec_Color+1,2,960,540,961,541);
@@ -138,19 +163,21 @@ void My_UIGraphRefresh()
         // 	UIArcDraw(&UI_Arco_t[0], "sol", UI_Graph_ADD, 8, UI_Color_Green, angle_start, mid_point_angle, 8, 960, 540, 100, 100);
         // 	UIArcDraw(&UI_Arco_t[1], "sor", UI_Graph_ADD, 8, UI_Color_Green, mid_point_angle, angle_end, 8, 960, 540, 100, 100);
         // }
+
         // pitch角度
         sprintf(UI_State_sta[4].show_Data, "Pitch");
-        UICharDraw(&UI_State_sta[4], "ss4", UI_Graph_ADD, 7, UI_Color_Cyan, 20, 2, 300, 700, "Pitch");
+        UICharDraw(&UI_State_sta[4], "ss4", UI_Graph_ADD, 7, UI_Color_Cyan, 20, 4, Gimbal_start_x, Gimbal_start_y, "Pitch");
         UICharRefresh(&referee_info.referee_id, UI_State_sta[4]);
 
-        UIFloatDraw(&UI_Number_t[0], "sm1", UI_Graph_ADD, 7, UI_Color_White, 20, 5, 3, 300 + 100, 700,(ui_cmd_recv.pitch_motor->measure.total_angle+PITCH_ZERO)*1000);
+        UIFloatDraw(&UI_Number_t[0], "sm1", UI_Graph_ADD, 7, UI_Color_White, 20, 5, 3, Gimbal_start_x + 100, Gimbal_start_y, (ui_cmd_recv.pitch_motor->measure.total_angle + PITCH_ZERO) * 1000);
 
         // yaw角度
         sprintf(UI_State_sta[3].show_Data, "Yaw");
-        UICharDraw(&UI_State_sta[3], "ss2", UI_Graph_ADD, 7, UI_Color_Cyan, 20, 2, 300, 700-100, "Yaw");
+        UICharDraw(&UI_State_sta[3], "ss2", UI_Graph_ADD, 7, UI_Color_Cyan, 20, 4, Gimbal_start_x, Gimbal_start_y - 100, "Yaw");
         UICharRefresh(&referee_info.referee_id, UI_State_sta[3]);
 
-        UIFloatDraw(&UI_Number_t[1], "sm2", UI_Graph_ADD, 7, UI_Color_White, 20, 5, 3, 300 + 100, 700-100,(int)(ui_cmd_recv.yaw_motor->measure.total_angle)*1000);
+        UIFloatDraw(&UI_Number_t[1], "sm2", UI_Graph_ADD, 7, UI_Color_White, 20, 5, 3, Gimbal_start_x + 100, Gimbal_start_y - 100, (int)(ui_cmd_recv.yaw_motor->measure.total_angle) * 1000);
+
 
         // 射击准点
         // UIGraphRefresh(&referee_info.referee_id, 7, UI_Deriction_line[0], UI_Deriction_line[1], UI_Deriction_line[2], UI_Deriction_line[3], UI_State_sta[0], UI_State_sta[2], UI_State_sta[4]);
@@ -165,29 +192,28 @@ void My_UIGraphRefresh()
     else {
         //pitch
         if (ui_cmd_recv.pitch_limit==0){
-        UIFloatDraw(&UI_Number_t[0], "sm1", UI_Graph_Change, 7, UI_Color_Purplish_red, 20, 5, 3, 300 + 100, 700,(ui_cmd_recv.pitch_motor->measure.total_angle+PITCH_ZERO)*1000);
+            UIFloatDraw(&UI_Number_t[0], "sm1", UI_Graph_Change, 7, UI_Color_Purplish_red, 20, 5, 3, Gimbal_start_x + 100, Gimbal_start_y, (ui_cmd_recv.pitch_motor->measure.total_angle + PITCH_ZERO) * 1000);
         }
         else {
-        UIFloatDraw(&UI_Number_t[0], "sm1", UI_Graph_Change, 7, UI_Color_White, 20, 5, 3, 300 + 100, 700,(ui_cmd_recv.pitch_motor->measure.total_angle+PITCH_ZERO)*1000);
+            UIFloatDraw(&UI_Number_t[0], "sm1", UI_Graph_Change, 7, UI_Color_White, 20, 5, 3, Gimbal_start_x + 100, Gimbal_start_y, (ui_cmd_recv.pitch_motor->measure.total_angle + PITCH_ZERO) * 1000);
         }
          // yaw角度
         if (ui_cmd_recv.yaw_limit == 0){
-        UIFloatDraw(&UI_Number_t[1], "sm2", UI_Graph_Change, 7, UI_Color_Purplish_red, 20, 5, 3, 300 + 100, 700-100,(int)(ui_cmd_recv.yaw_motor->measure.total_angle)*1000);
+            UIFloatDraw(&UI_Number_t[1], "sm2", UI_Graph_Change, 7, UI_Color_Purplish_red, 20, 5, 3, Gimbal_start_x + 100, Gimbal_start_y - 100, (int)(ui_cmd_recv.yaw_motor->measure.total_angle) * 1000);
         }
         else {
-        UIFloatDraw(&UI_Number_t[1], "sm2", UI_Graph_Change, 7, UI_Color_White, 20, 5, 3, 300 + 100, 700-100,(int)(ui_cmd_recv.yaw_motor->measure.total_angle)*1000);
+            UIFloatDraw(&UI_Number_t[1], "sm2", UI_Graph_Change, 7, UI_Color_White, 20, 5, 3, Gimbal_start_x + 100, Gimbal_start_y - 100, (int)(ui_cmd_recv.yaw_motor->measure.total_angle) * 1000);
         }
         UIGraphRefresh(&referee_info.referee_id,2,UI_Number_t[0],UI_Number_t[1]);
         
-        
         //摩擦轮
         if (ui_cmd_recv.friction_mode == FRICTION_ON){
-        UICircleDraw(&UI_Circle_t[2], "sc2", UI_Graph_Change, 7, UI_Color_Cyan, 30, 1180, 160, 8);  // 摩擦轮是否开启显示
-        UICircleDraw(&UI_Circle_t[3], "sc3", UI_Graph_Change, 7, UI_Color_Cyan, 30, 1280, 160, 8); // 摩擦轮是否正常显示
+            UICircleDraw(&UI_Circle_t[2], "sc2", UI_Graph_Change, 7, UI_Color_Cyan, 30, shoot_fric_x, shoot_fric_y, 8); // 摩擦轮是否开启显示
+            UICircleDraw(&UI_Circle_t[3], "sc3", UI_Graph_Change, 7, UI_Color_Cyan, 30, shoot_fric_x + 100, shoot_fric_y, 8); // 摩擦轮是否正常显示
         }
         else {
-        UICircleDraw(&UI_Circle_t[2], "sc2", UI_Graph_Change, 7, UI_Color_White, 30, 1180, 160, 8);  // 摩擦轮是否开启显示
-        UICircleDraw(&UI_Circle_t[3], "sc3", UI_Graph_Change, 7, UI_Color_White, 30, 1280, 160, 8); // 摩擦轮是否正常显示
+            UICircleDraw(&UI_Circle_t[2], "sc2", UI_Graph_Change, 7, UI_Color_White, 30, shoot_fric_x, shoot_fric_y, 8); // 摩擦轮是否开启显示
+            UICircleDraw(&UI_Circle_t[3], "sc3", UI_Graph_Change, 7, UI_Color_White, 30, shoot_fric_x+100, shoot_fric_y, 8); // 摩擦轮是否正常显示
         }
         UIGraphRefresh(&referee_info.referee_id,2,UI_Circle_t[2],UI_Circle_t[3]);
         
