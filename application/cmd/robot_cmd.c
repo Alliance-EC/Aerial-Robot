@@ -62,17 +62,18 @@ static Gimbal_Ctrl_Cmd_s gimbal_cmd_send;      // 传递给云台的控制信息
 static Gimbal_Upload_Data_s gimbal_fetch_data; // 从云台获取的反馈信息
 
 static Publisher_t *shoot_cmd_pub;           // 发射控制消息发布者
-static Subscriber_t *shoot_feed_sub;         // 发射反馈信息订阅者
+static Subscriber_t *shoot_feed_sub; // 发射反馈信息订阅者
 static Shoot_Ctrl_Cmd_s shoot_cmd_send;      // 传递给发射的控制信息
 static Shoot_Upload_Data_s shoot_fetch_data; // 从发射获取的反馈信息
+
 
 static Robot_Status_e robot_state; // 机器人整体工作状态
 
 Referee_Interactive_info_t Referee_Interactive_info;    // 发送给UI绘制的数据
 auto_shoot_mode_e AutoShooting_flag = AutoShooting_Off; // 自动射击标志位
 extern char Send_Once_Flag;                             // 初始化UI标志
-extern float Yaw_Angle;
-extern float Pitch_Angle; // 云台Pitch轴角度
+
+
 float limit_yaw_max = YAW_ANGLE_MAX, limit_yaw_min = YAW_ANGLE_MIN;
 float limit_pitch_max = PITCH_ANGLE_MAX, limit_pitch_min = PITCH_ANGLE_MIN;
 
@@ -88,6 +89,7 @@ int Shoot_Run_Flag;  // 摩擦轮标志位
 
 static void RobotReset() ;
 static void EmergencyHandler() ;
+static void Shoot_control() ;
 
 void HOST_RECV_CALLBACK()
 {
@@ -109,6 +111,7 @@ void RobotCMDInit()
     gimbal_feed_sub = SubRegister("gimbal_feed", sizeof(Gimbal_Upload_Data_s));
     shoot_cmd_pub   = PubRegister("shoot_cmd", sizeof(Shoot_Ctrl_Cmd_s));
     shoot_feed_sub  = SubRegister("shoot_feed", sizeof(Shoot_Upload_Data_s));
+
 
 #if PITCH_FEED_TYPE
     gimbal_cmd_send.pitch = 0;
@@ -136,16 +139,9 @@ static void RC_CONTROL_MODE()
         }
     // 左侧开关为[上]右侧开关为[下]，且接收到上位机的相对角度,视觉模式
     if ((switch_is_down(rc_data[TEMP].rc.switch_right) && switch_is_up(rc_data[TEMP].rc.switch_left))) {
-        if (rc_data[TEMP].rc.dial > 440) {
-            shoot_cmd_send.load_mode = LOAD_BURSTFIRE;
-        } 
-        else if (rc_data[TEMP].rc.dial < -440){
-            shoot_cmd_send.load_mode = LOAD_1_BULLET;
-        }
-        else {
-            shoot_cmd_send.load_mode = LOAD_STOP;
-        }
-        gimbal_cmd_send.gimbal_mode = GIMBAL_VISION_MODE;
+            shoot_cmd_send.friction_mode = FRICTION_OFF;
+            Shoot_control();
+            gimbal_cmd_send.gimbal_mode = GIMBAL_VISION_MODE;
 
             // 使用相对角度控制
             memcpy(&rec_yaw, vision_recv_data, sizeof(float));
@@ -158,25 +154,12 @@ static void RC_CONTROL_MODE()
             } else {
                 gimbal_cmd_send.gimbal_mode = GIMBAL_VISION_MODE;
             }
-
-            // if (rc_data[TEMP].rc.dial > 440) {
-            //     shoot_cmd_send.load_mode     = LOAD_BURSTFIRE;
-            // } else {
-            //     shoot_cmd_send.load_mode     = LOAD_STOP;
-            // }
         } else {
             gimbal_cmd_send.gimbal_mode = GIMBAL_RC_MODE;
             if (switch_is_mid(rc_data[TEMP].rc.switch_right) && switch_is_up(rc_data[TEMP].rc.switch_left)) // 左侧开关状态[上],右侧开关状态[中],底盘和云台分离,摩擦轮启动
             {
-               if (rc_data[TEMP].rc.dial > 440) {
-            shoot_cmd_send.load_mode = LOAD_BURSTFIRE;
-        } 
-        else if (rc_data[TEMP].rc.dial < -440){
-            shoot_cmd_send.load_mode = LOAD_1_BULLET;
-        }
-        else {
-            shoot_cmd_send.load_mode = LOAD_STOP;
-        }
+                shoot_cmd_send.friction_mode = FRICTION_ON;
+                Shoot_control();
             } 
         }
     }
@@ -205,14 +188,7 @@ static void PC_CONTROL_MODE()
         gimbal_cmd_send.yaw   = yaw_control;
         gimbal_cmd_send.pitch = pitch_control;
 
-        //控制发射
-        if (rc_data[TEMP].key[KEY_PRESS].v && !(rc_data[TEMP].key[KEY_PRESS].ctrl)) {
-            Shoot_Run_Flag++;
-        } else if (rc_data[TEMP].key[KEY_PRESS].v && (rc_data[TEMP].key[KEY_PRESS].ctrl)) {
-            Shoot_Run_Flag--;
-        } else {
-            Shoot_Run_Flag = 0;
-        }
+        
         
         //控制UI
         if (rc_data[TEMP].key[KEY_PRESS].r) {
@@ -257,8 +233,7 @@ void UpDateUI()
     Referee_Interactive_info.lid_last_mode           = Referee_Interactive_info.lid_mode;
 
 
-    Pitch_Angle = gimbal_fetch_data.gimbal_imu_data->output.INS_angle[1] * RAD_TO_ANGLE * (-1); // 获得IMU的pitch绝对角度（角度制），用于绘制UI
-    Yaw_Angle   = gimbal_fetch_data.gimbal_imu_data->output.INS_angle[0] * RAD_TO_ANGLE;        // 获得IMU的yaw绝对角度（角度制），用于绘制UI 1
+
 
     if (rc_data[TEMP].mouse.press_r && vision_recv_data[8] == 1) {
         AutoShooting_flag = AutoShooting_Find;
@@ -266,6 +241,16 @@ void UpDateUI()
         AutoShooting_flag = AutoShooting_Open;
     } else {
         AutoShooting_flag = AutoShooting_Off;
+    }
+}
+
+static void Shoot_control(){
+    if (rc_data[TEMP].rc.dial > 440) {
+        shoot_cmd_send.load_mode = LOAD_BURSTFIRE;
+    } else if (rc_data[TEMP].rc.dial < -440) {
+        shoot_cmd_send.load_mode = LOAD_1_BULLET;
+    } else {
+        shoot_cmd_send.load_mode = LOAD_STOP;
     }
 }
 static void Gimbal_control(int mode){
@@ -340,7 +325,7 @@ void RobotCMDTask()
         // pitch_control = gimbal_fetch_data.gimbal_imu_data->output.INS_angle[INS_PITCH_ADDRESS_OFFSET] + rec_pitch;
     } else {
         RC_CONTROL_MODE();
-        shoot_cmd_send.friction_mode = FRICTION_ON;
+        //shoot_cmd_send.friction_mode = FRICTION_ON;
     }
 
     Gimbal_control(gimbal_cmd_send.gimbal_mode);
@@ -354,9 +339,7 @@ void RobotCMDTask()
         shoot_cmd_send.load_mode      = LOAD_STOP;
     }
 
-    if ((switch_is_down(rc_data[TEMP].rc.switch_right) && switch_is_up(rc_data[TEMP].rc.switch_left))) {
-        shoot_cmd_send.friction_mode=FRICTION_OFF;
-    }
+    
         // 设置视觉发送数据,还需增加加速度和角速度数据
 
         // 推送消息,双板通信,视觉通信等

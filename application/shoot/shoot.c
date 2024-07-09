@@ -15,7 +15,7 @@ static DJIMotorInstance *friction_l, *friction_r, *loader;
 static Publisher_t *shoot_pub;
 static Shoot_Ctrl_Cmd_s shoot_cmd_recv; // 来自cmd的发射控制信息
 static Subscriber_t *shoot_sub;
-static Shoot_Upload_Data_s shoot_feedback_data; // 来自cmd的发射控制信息
+static Shoot_Upload_Data_s shoot_feedback_data;
 
 float delta_friction=0;
 float delta_speed_r=0;

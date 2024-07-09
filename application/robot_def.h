@@ -151,17 +151,6 @@ typedef enum {
  *
  */
 // cmd发布的底盘控制数据,由chassis订阅
-typedef struct
-{
-    // 控制部分
-    float vx;           // 前进方向速度
-    float vy;           // 横移方向速度
-    float wz;           // 旋转速度
-    float offset_angle; // 底盘和归中位置的夹角
-    // UI部分
-    //  ...
-
-} Chassis_Ctrl_Cmd_s;
 
 // cmd发布的云台控制数据,由gimbal订阅
 typedef struct
@@ -175,6 +164,16 @@ typedef struct
     gimbal_mode_e gimbal_mode;
 } Gimbal_Ctrl_Cmd_s;
 
+typedef struct
+{ // 云台角度控制
+    float yaw;
+    float pitch;
+    int gimbal_yaw_max;
+    int gimbal_yaw_min;
+    int gimbal_pitch_max;
+    int gimbal_pitch_min;
+    gimbal_mode_e gimbal_mode;
+} Ui_Ctrl_Cmd_s;
 
 // cmd发布的发射控制数据,由shoot订阅
 typedef struct

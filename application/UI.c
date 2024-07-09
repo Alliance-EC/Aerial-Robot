@@ -10,6 +10,13 @@
 #include "dji_motor.h"
 #include "super_cap.h"
 
+static Subscriber_t *gimbal_feed_sub;          // 云台反馈信息订阅者
+static Gimbal_Upload_Data_s gimbal_fetch_data; // 从云台获取的反馈信息
+
+static Subscriber_t *shoot_feed_sub;                         // 发射反馈信息订阅者
+static Shoot_Upload_Data_s shoot_fetch_data;                 // 从发射获取的反馈信息
+
+
 extern referee_info_t referee_info;                         // 裁判系统数据
 extern Referee_Interactive_info_t Referee_Interactive_info; // 绘制UI所需的数据
 
@@ -30,8 +37,6 @@ static Gimbal_Upload_Data_s gimbal_fetch_data; // 从云台获取的反馈信息
 uint8_t Super_condition;    // 超电的开关状态
 float Super_condition_volt; // 超电的电压
 
-float Pitch_Angle; // pitch角度（角度制)
-float Yaw_Angle;   // yaw角度（角度制）
 
 extern auto_shoot_mode_e AutoShooting_flag; // 自动射击标志位
 
@@ -57,10 +62,17 @@ int16_t AIM_Rect_X, AIM_Rect_Y; // 自瞄框中心点的坐标信息
 int16_t AIM_Rect_half_length = 50;
 int16_t AIM_Rec_Color;
 
+void ui_init(){
+
+}
+
 void My_UIGraphRefresh()
 {
+
+    SubGetMessage(gimbal_feed_sub, &gimbal_fetch_data);
+    SubGetMessage(shoot_feed_sub, &shoot_fetch_data);
+
     DeterminRobotID();
-    //SubGetMessage(gimbal_feed_sub, &gimbal_fetch_data);
 
     // const float arc = 45.0f; // 弧长
     // const uint16_t Mechangle_offset = 10546;
@@ -91,17 +103,20 @@ void My_UIGraphRefresh()
         //UILineDraw(&UI_Deriction_line[1], "sq1", UI_Graph_ADD, 6, UI_Color_White, 1, SCREEN_LENGTH / 2 - 22, SCREEN_WIDTH / 2 - 47 + 30, SCREEN_LENGTH / 2 - 22, SCREEN_WIDTH / 2 - 47 + 5);
         //UILineDraw(&UI_Deriction_line[2], "sq2", UI_Graph_ADD, 6, UI_Color_White, 1, SCREEN_LENGTH / 2 - 22 - 5, SCREEN_WIDTH / 2 - 47, SCREEN_LENGTH / 2 - 22 - 30, SCREEN_WIDTH / 2 - 47);
         //UILineDraw(&UI_Deriction_line[3], "sq3", UI_Graph_ADD, 6, UI_Color_White, 1, SCREEN_LENGTH / 2 - 22, SCREEN_WIDTH / 2 - 47 - 5, SCREEN_LENGTH / 2 - 22, SCREEN_WIDTH / 2 - 47 - 30);
-        // 小陀螺
-        // sprintf(UI_State_sta[0].show_Data,"Rotate");
-        // UICharDraw(&UI_State_sta[0], "ss0", UI_Graph_ADD, 9, UI_Color_Yellow, 20, 2, 660, 100, "Rotate");
+
+        // sprintf(UI_State_sta[0].show_Data,"Pitch");
+        // UICharDraw(&UI_State_sta[0], "ss0", UI_Graph_ADD, 9, UI_Color_Yellow, 20, 2, 660, 100, "Pitch");
         // UICharRefresh(&referee_info.referee_id,UI_State_sta[0]);
-        //UICircleDraw(&UI_Circle_t[0], "sc0", UI_Graph_ADD, 9, UI_Color_White, 20, 700, 160, 8);
+
+
+        UICircleDraw(&UI_Circle_t[0], "sc0", UI_Graph_ADD, 9, UI_Color_White, 20, 700, 160, 8);
         // 摩擦轮
         //  sprintf(UI_State_sta[2].show_Data,"Fric");
         //  UICharDraw(&UI_State_sta[2], "ss2", UI_Graph_ADD, 9, UI_Color_Yellow, 20, 2, 1160,100, "Fric");
         //  UICharRefresh(&referee_info.referee_id, UI_State_sta[2]);
         UICircleDraw(&UI_Circle_t[2], "sc2", UI_Graph_ADD, 7, UI_Color_White, 20, 1180, 160, 8);  // 摩擦轮是否开启显示
         UICircleDraw(&UI_Circle_t[3], "sc3", UI_Graph_ADD, 7, UI_Color_Orange, 20, 1280, 160, 8); // 摩擦轮是否正常显示
+
 
         //UILineDraw(&UI_Energy[1], "sn1", UI_Graph_ADD, 9, UI_Color_Green, 20, 80, 720, (uint32_t)((Super_condition_volt * Super_condition_volt - 144) / 532 * 400 + 80), 720); // 超电电压在12V-26V之间
         // 初始自瞄框
@@ -128,11 +143,11 @@ void My_UIGraphRefresh()
         // 	UIArcDraw(&UI_Arco_t[1], "sor", UI_Graph_ADD, 8, UI_Color_Green, mid_point_angle, angle_end, 8, 960, 540, 100, 100);
         // }
         // pitch角度
-        // sprintf(UI_State_sta[4].show_Data, "Pitch");
-        // UICharDraw(&UI_State_sta[4], "ss4", UI_Graph_ADD, 9, UI_Color_Yellow, 20, 2, 300, 700, "Pitch");
-        // UICharRefresh(&referee_info.referee_id, UI_State_sta[4]);
+        sprintf(UI_State_sta[4].show_Data, "Pitch");
+        UICharDraw(&UI_State_sta[4], "ss4", UI_Graph_ADD, 7, UI_Color_Yellow, 20, 2, 300, 700, "Pitch");
+        UICharRefresh(&referee_info.referee_id, UI_State_sta[4]);
 
-        // UIFloatDraw(&UI_Number_t[0], "sm1", UI_Graph_ADD, 9, UI_Color_Yellow, 20, 5, 3, 300 + 100, 700, Pitch_Angle * 1000);
+        UIFloatDraw(&UI_Number_t[0], "sm1", UI_Graph_ADD, 7, UI_Color_Yellow, 20, 5, 3, 300 + 100, 700,gimbal_fetch_data.pitch_motor->measure.total_angle);
 
         // 射击准点
         // UIGraphRefresh(&referee_info.referee_id, 7, UI_Deriction_line[0], UI_Deriction_line[1], UI_Deriction_line[2], UI_Deriction_line[3], UI_State_sta[0], UI_State_sta[2], UI_State_sta[4]);
@@ -204,3 +219,4 @@ void My_UIGraphRefresh()
     //     UIGraphRefresh(&referee_info.referee_id, 7, UI_Circle_t[0], UI_Circle_t[2], UI_Circle_t[3], UI_Circle_t[4], UI_Number_t[0], UI_Circle_t[5], UI_Energy[1]);
     // }
 }
+
