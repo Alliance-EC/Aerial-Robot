@@ -22,8 +22,6 @@ float delta_speed_r=0;
 float delta_speed_l = 0;
 // dwt定时,计算冷却用
 static float hibernate_time = 0, dead_time = 0;
-// 用来控制UI的刷新频率
-static uint8_t UI_timer = 0;
 
 bool friction_mode_last =1;
 void ShootInit()
@@ -74,20 +72,13 @@ void ShootInit()
             .tx_id      = 6,
         },
         .controller_param_init_config = {
-            // .angle_PID = {
-            //     // 如果启用位置环来控制发弹,需要较大的I值保证输出力矩的线性度否则出现接近拨出的力矩大幅下降
-            //     .Kp     = 10, // 10
-            //     .Ki     = 1,  // 1,
-            //     .Kd     = 0,
-            //     .MaxOut = 200,
-            // },
             .speed_PID = {
-                .Kp            = 2.0, // 10
+                .Kp            = 3.0, // 10
                 .Ki            = 0,  // 0.5, // 1
-                .Kd            = 0.01,
+                .Kd            = 0.00001,
                 .Improve       = PID_Integral_Limit ,
                 .IntegralLimit = 5000,
-                .MaxOut        = 10000,
+                .MaxOut        = 12000,
             },
         },
         .controller_setting_init_config = {
@@ -155,7 +146,7 @@ void ShootTask()
     SubGetMessage(shoot_sub, &shoot_cmd_recv);
     // 对shoot mode等于SHOOT_STOP的情况特殊处理,直接停止所有电机(紧急停止)
     if (shoot_cmd_recv.shoot_mode == SHOOT_OFF) {
-        DJIMotorSetRef(friction_l, 0); // 42500
+        DJIMotorSetRef(friction_l, 0); // 45000
         DJIMotorSetRef(friction_r, 0);
         // DJIMotorStop(friction_l);
         // DJIMotorStop(friction_r);
@@ -217,8 +208,8 @@ void ShootTask()
             ramp_init(&shoot_ramp_l, RAMP_TIME);
             ramp_init(&shoot_ramp_r, RAMP_TIME);
         }
-        DJIMotorSetRef(friction_l, 42500*ramp_calc(&shoot_ramp_l)); // 42500
-        DJIMotorSetRef(friction_r, 42500*ramp_calc(&shoot_ramp_r));
+        DJIMotorSetRef(friction_l, 45000*ramp_calc(&shoot_ramp_l)); // 42500
+        DJIMotorSetRef(friction_r, 45000*ramp_calc(&shoot_ramp_r));
     } 
     else if (shoot_cmd_recv.friction_mode == FRICTION_REVERSE) {
         // DJIMotorSetRef(friction_l, -150);
@@ -230,12 +221,12 @@ void ShootTask()
             ramp_init(&shoot_ramp_r, RAMP_TIME);
         }
 
-        DJIMotorSetRef(friction_r, 42500 * (1 - ramp_calc(&shoot_ramp_r)));
-        DJIMotorSetRef(friction_l, 42500 * (1 - ramp_calc(&shoot_ramp_l)));
+        DJIMotorSetRef(friction_r, 45000 * (1 - ramp_calc(&shoot_ramp_r)));
+        DJIMotorSetRef(friction_l, 45000 * (1 - ramp_calc(&shoot_ramp_l)));
     }
     delta_friction=friction_l->measure.speed_aps+ friction_r->measure.speed_aps;
-    delta_speed_l = friction_l->measure.speed_aps -42500;
-    delta_speed_r = friction_r->measure.speed_aps +42500;
+    delta_speed_l = friction_l->measure.speed_aps -45000;
+    delta_speed_r = friction_r->measure.speed_aps +45000;
     friction_mode_last = shoot_cmd_recv.friction_mode;
     // 反馈数据,目前暂时没有要设定的反馈数据,后续可能增加应用离线监测以及卡弹反馈
      PubPushMessage(shoot_pub, (void *)&shoot_feedback_data);

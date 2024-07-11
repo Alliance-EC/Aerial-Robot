@@ -157,11 +157,15 @@ typedef struct
 { // 云台角度控制
     float yaw;
     float pitch;
+    float yaw_last;
+    float pitch_last;
     int gimbal_yaw_max;
     int gimbal_yaw_min;
     int gimbal_pitch_max;
     int gimbal_pitch_min;
     gimbal_mode_e gimbal_mode;
+    float delta_yaw;
+    float delta_pitch;
 } Gimbal_Ctrl_Cmd_s;
 
 typedef struct

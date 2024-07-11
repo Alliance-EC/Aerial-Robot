@@ -41,6 +41,7 @@ typedef enum
     CURRENT_FEEDFORWARD = 0b01,
     SPEED_FEEDFORWARD = 0b10,
     CURRENT_AND_SPEED_FEEDFORWARD = CURRENT_FEEDFORWARD | SPEED_FEEDFORWARD,
+    ANGLE_FEEDFORWARD =4,
 } Feedfoward_Type_e;
 
 /* 反馈来源设定,若设为OTHER_FEED则需要指定数据来源指针,详见Motor_Controller_s*/

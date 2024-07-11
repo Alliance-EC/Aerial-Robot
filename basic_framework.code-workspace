@@ -24,7 +24,9 @@
       "*.lib": "c",
       "numeric": "c",
       "cstdint": "c",
-      "UI.C": "cpp"
+      "UI.C": "cpp",
+      "cmath": "c",
+      "*.tcc": "c"
     },
     "[yaml]": {
       "editor.insertSpaces": true,

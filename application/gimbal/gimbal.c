@@ -22,6 +22,8 @@ static Gimbal_Ctrl_Cmd_s gimbal_cmd_recv;         // 来自cmd的控制信息
 extern referee_info_t referee_info;
 static referee_info_t *referee_data; // 用于获取裁判系统的数据
 
+extern float delta_pitch;
+extern float delta_yaw;
 void GimbalInit()
 {
     BMI088_Init_Config_s config = {
@@ -62,16 +64,19 @@ void GimbalInit()
             .tx_id      = 1,
         },
         .controller_param_init_config = {
-            .angle_PID = {
-                .Kp                = 90, 
-                .Ki                = 0,
-                .Kd                = 3.5, //2.95
-                .Derivative_LPF_RC = 0.002,
-                .DeadBand          = 0.0f,
-                .Improve           = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_DerivativeFilter | PID_OutputFilter,
-                .Output_LPF_RC     = 0.002,
-                .IntegralLimit     = 11,
-                .MaxOut            = 400,
+            .current_feedforward_ptr = &(delta_yaw),
+            .angle_PID               = {
+                              .Kp                = 90,
+                              .Ki                = 1000,
+                              .Kd                = 3.5, // 2.95
+                              .Derivative_LPF_RC = 0.002,
+                              .DeadBand          = 0.0f,
+                              .Improve           = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_DerivativeFilter | PID_OutputFilter | PID_ChangingIntegrationRate,
+                              .CoefA             = 1,
+                              .CoefB             = 0.1,
+                              .Output_LPF_RC     = 0.002,
+                              .IntegralLimit     = 100,
+                              .MaxOut            = 400,
             },
             .speed_PID = {
                 .Kp                = 100, // 100
@@ -93,6 +98,7 @@ void GimbalInit()
             .outer_loop_type       = ANGLE_LOOP,
             .close_loop_type       = ANGLE_LOOP | SPEED_LOOP,
             .motor_reverse_flag    = MOTOR_DIRECTION_NORMAL,
+            .feedforward_flag      = ANGLE_FEEDFORWARD,
         },
         .motor_type = GM6020};
     // PITCH
@@ -102,13 +108,14 @@ void GimbalInit()
             .tx_id      = 4,
         },
         .controller_param_init_config = {
+             .current_feedforward_ptr=&(delta_pitch),
             .angle_PID = {
                 .Kp            = 120, // 150
-                .Ki            = 50,  // 1
+                .Ki            = 4000,  // 1        
                 .Kd            = 3.4, // 3
                 .Improve       = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_ChangingIntegrationRate,
-                .CoefA         = 0.2,
-                .CoefB         = 0.001,
+                .CoefA         = 0.005,
+                .CoefB         = 0.0005,
                 .IntegralLimit = 10,
                 .MaxOut        = 40,
             },
@@ -132,6 +139,7 @@ void GimbalInit()
             .outer_loop_type       = ANGLE_LOOP,
             .close_loop_type       = SPEED_LOOP | ANGLE_LOOP,
             .motor_reverse_flag    = MOTOR_DIRECTION_NORMAL,
+            .feedforward_flag      = ANGLE_FEEDFORWARD,
         },
         .motor_type = GM6020,
     };

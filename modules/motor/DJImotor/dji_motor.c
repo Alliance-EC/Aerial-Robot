@@ -256,7 +256,8 @@ void DJIMotorControl()
             else
                 pid_measure = measure->total_angle; // MOTOR_FEED,对total angle闭环,防止在边界处出现突跃
             // 更新pid_ref进入下一个环
-
+            if (motor_setting->feedforward_flag & ANGLE_FEEDFORWARD)
+                pid_ref += *motor_controller->current_feedforward_ptr;
             pid_ref = PIDCalculate(&motor_controller->angle_PID, pid_measure, pid_ref);
         }
 
