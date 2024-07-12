@@ -314,6 +314,18 @@ typedef struct
 
 /****************************UI交互数据****************************/
 
+typedef enum {
+    UI_Graph_Line      = 0, // 直线
+    UI_Graph_Rectangle = 1, // 矩形
+    UI_Graph_Circle    = 2, // 整圆
+    UI_Graph_Ellipse   = 3, // 椭圆
+    UI_Graph_Arc       = 4, // 圆弧
+    UI_Graph_Float     = 5, // 浮点型
+    UI_Graph_Int       = 6, // 整形
+    UI_Graph_Char      = 7, // 字符型
+
+} UI_Graph_Type_e;
+
 /* 图形数据 */
 typedef struct
 {
@@ -352,18 +364,7 @@ typedef enum {
     UI_Graph_Del    = 3,
 } UI_Graph_Operate_e;
 
-/* 图形配置参数__图形类型 */
-typedef enum {
-    UI_Graph_Line      = 0, // 直线
-    UI_Graph_Rectangle = 1, // 矩形
-    UI_Graph_Circle    = 2, // 整圆
-    UI_Graph_Ellipse   = 3, // 椭圆
-    UI_Graph_Arc       = 4, // 圆弧
-    UI_Graph_Float     = 5, // 浮点型
-    UI_Graph_Int       = 6, // 整形
-    UI_Graph_Char      = 7, // 字符型
 
-} UI_Graph_Type_e;
 
 /* 图形配置参数__图形颜色 */
 typedef enum {

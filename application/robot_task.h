@@ -68,11 +68,12 @@ __attribute__((noreturn)) void _GimbalTask(void *argument)
 
 __attribute__((noreturn)) void _ChassisTask(void *argument)
 {
-    for (;;) {
+    for (;;)
+    {
         ChassisTask();
         My_UIGraphRefresh();
         LOGERROR("_ChassisTask Task Running");
-        osDelay(10);
+        osDelay(1);
     }
 }
 

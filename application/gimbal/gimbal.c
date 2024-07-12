@@ -24,6 +24,7 @@ static referee_info_t *referee_data; // 用于获取裁判系统的数据
 
 extern float delta_pitch;
 extern float delta_yaw;
+
 void GimbalInit()
 {
     BMI088_Init_Config_s config = {
@@ -66,7 +67,7 @@ void GimbalInit()
         .controller_param_init_config = {
             .current_feedforward_ptr = &(delta_yaw),
             .angle_PID               = {
-                              .Kp                = 90,
+                              .Kp                = 80, // 90
                               .Ki                = 1000,
                               .Kd                = 3.5, // 2.95
                               .Derivative_LPF_RC = 0.002,
@@ -79,7 +80,7 @@ void GimbalInit()
                               .MaxOut            = 400,
             },
             .speed_PID = {
-                .Kp                = 100, // 100
+                .Kp                = 90,  // 100
                 .Ki                = 0,   // 0
                 .Kd                = 2.5, // 2.0
                 .Improve           = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_OutputFilter | PID_DerivativeFilter,
@@ -98,7 +99,7 @@ void GimbalInit()
             .outer_loop_type       = ANGLE_LOOP,
             .close_loop_type       = ANGLE_LOOP | SPEED_LOOP,
             .motor_reverse_flag    = MOTOR_DIRECTION_NORMAL,
-            .feedforward_flag      = ANGLE_FEEDFORWARD,
+            .feedforward_flag      = CURRENT_FEEDFORWARD,
         },
         .motor_type = GM6020};
     // PITCH
@@ -108,16 +109,16 @@ void GimbalInit()
             .tx_id      = 4,
         },
         .controller_param_init_config = {
-             .current_feedforward_ptr=&(delta_pitch),
-            .angle_PID = {
-                .Kp            = 120, // 150
-                .Ki            = 4000,  // 1        
-                .Kd            = 3.4, // 3
-                .Improve       = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_ChangingIntegrationRate,
-                .CoefA         = 0.005,
-                .CoefB         = 0.0005,
-                .IntegralLimit = 10,
-                .MaxOut        = 40,
+            //.current_feedforward_ptr = &(delta_pitch),
+            .angle_PID               = {
+                              .Kp            = 120,  // 150
+                              .Ki            = 4000, // 1
+                              .Kd            = 3.4,  // 3
+                              .Improve       = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_ChangingIntegrationRate,
+                              .CoefA         = 0.005,
+                              .CoefB         = 0.0005,
+                              .IntegralLimit = 10,
+                              .MaxOut        = 40,
             },
             .speed_PID = {
                 .Kp                = 3000, // 10500, // 13000,//10500,  // 10500
@@ -139,7 +140,7 @@ void GimbalInit()
             .outer_loop_type       = ANGLE_LOOP,
             .close_loop_type       = SPEED_LOOP | ANGLE_LOOP,
             .motor_reverse_flag    = MOTOR_DIRECTION_NORMAL,
-            .feedforward_flag      = ANGLE_FEEDFORWARD,
+            .feedforward_flag      = CURRENT_FEEDFORWARD,
         },
         .motor_type = GM6020,
     };
@@ -157,12 +158,12 @@ void GimbalTask()
     // 获取云台控制数据
     // 后续增加未收到数据的处理
     SubGetMessage(gimbal_sub, &gimbal_cmd_recv);
-
-    if(gimbal_cmd_recv.gimbal_mode == GIMBAL_ZERO_FORCE) {
+    if (gimbal_cmd_recv.gimbal_mode == GIMBAL_ZERO_FORCE)
+    {
         // 停止
             DJIMotorStop(yaw_motor);
             DJIMotorStop(pitch_motor);
-    }// 使用陀螺仪的反馈,底盘根据yaw电机的offset跟随云台或视觉模式采用
+    } // 使用陀螺仪的反馈,底盘根据yaw电机的offset跟随云台或视觉模式采用
     else{
         DJIMotorEnable(yaw_motor);
         DJIMotorEnable(pitch_motor);

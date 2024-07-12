@@ -256,13 +256,17 @@ void DJIMotorControl()
             else
                 pid_measure = measure->total_angle; // MOTOR_FEED,对total angle闭环,防止在边界处出现突跃
             // 更新pid_ref进入下一个环
-            if (motor_setting->feedforward_flag & ANGLE_FEEDFORWARD)
+            if (motor_setting->feedforward_flag & CURRENT_FEEDFORWARD) {
+                if (*(motor_controller->current_feedforward_ptr) > 1.6) *(motor_controller->current_feedforward_ptr) = 1.6;
+                if (*(motor_controller->current_feedforward_ptr) < -1.6) *(motor_controller->current_feedforward_ptr) = -1.6;
                 pid_ref += *motor_controller->current_feedforward_ptr;
+            }
             pid_ref = PIDCalculate(&motor_controller->angle_PID, pid_measure, pid_ref);
         }
 
         if (motor_setting->motor_reverse_flag == MOTOR_DIRECTION_REVERSE)
             pid_ref *= -1;
+
 
         // 计算速度环,(外层闭环为速度或位置)且(启用速度环)时会计算速度环
         if ((motor_setting->close_loop_type & SPEED_LOOP) && (motor_setting->outer_loop_type & (ANGLE_LOOP | SPEED_LOOP))) {

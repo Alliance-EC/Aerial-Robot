@@ -149,6 +149,6 @@ referee_info_t *RefereeInit(UART_HandleTypeDef *referee_usart_handle)
 void RefereeSend(uint8_t *send, uint16_t tx_len)
 {
 	USARTSend(referee_usart_instance, send, tx_len, USART_TRANSFER_DMA);
-	osDelay(30);
+	osDelay(35);
 }
 

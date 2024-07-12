@@ -207,13 +207,13 @@ float PIDCalculate(PIDInstance *pid, float measure, float ref)
         pid->Output = 0;
         pid->ITerm  = 0;
     }
-
+    pid->delta_output = (pid->Output - pid->Last_Output)*5;
     // 保存当前数据,用于下次计算
     pid->Last_Measure = pid->Measure;
     pid->Last_Output  = pid->Output;
     pid->Last_Dout    = pid->Dout;
     pid->Last_Err     = pid->Err;
     pid->Last_ITerm   = pid->ITerm;
-
+    
     return pid->Output;
 }

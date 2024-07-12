@@ -86,7 +86,8 @@ typedef struct
     float Output;
     float Last_Output;
     float Last_Dout;
-
+    
+    float delta_output;
     float Ref;
 
     uint32_t DWT_CNT;

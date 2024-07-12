@@ -186,11 +186,11 @@ static void PC_CONTROL_MODE()
             // 相对角度控制
             memcpy(&rec_yaw, vision_recv_data, sizeof(float));
             memcpy(&rec_pitch, vision_recv_data + 4, sizeof(float));
-            if ((rec_yaw == 0 && rec_pitch == 0) || vision_recv_data[8] == 0) {
-                gimbal_cmd_send.gimbal_mode = GIMBAL_PC_MODE;
-            } else {
+            // if ((rec_yaw == 0 && rec_pitch == 0) || vision_recv_data[8] == 0) {
+            //     gimbal_cmd_send.gimbal_mode = GIMBAL_PC_MODE;
+            // } else {
                 gimbal_cmd_send.gimbal_mode=GIMBAL_VISION_MODE;
-            }
+            //}
         } else {
             gimbal_cmd_send.gimbal_mode=GIMBAL_PC_MODE;
         }
@@ -241,6 +241,7 @@ void UpDateUI()
     ui_cmd_send.pitch_limit=pc_limit_pitch;
     ui_cmd_send.friction_mode=shoot_cmd_send.friction_mode;
     ui_cmd_send.load_mode    = shoot_cmd_send.load_mode;
+    ui_cmd_send.gimbal_mode=gimbal_cmd_send.gimbal_mode;
 }
 
 static void Shoot_control(int mode){
@@ -264,13 +265,15 @@ static void Shoot_control(int mode){
     }
 }
 static void Gimbal_control(int mode){
+
 //键鼠控制
     if (mode ==GIMBAL_PC_MODE){
         pc_limit_yaw=brake_calc(limit_yaw_max, 20, gimbal_fetch_data.yaw_motor->measure.total_angle, limit_yaw_min, -rc_data[TEMP].mouse.x);
         pc_limit_pitch=brake_calc(limit_pitch_max, 5, gimbal_fetch_data.pitch_motor->measure.total_angle, limit_pitch_min, rc_data[TEMP].mouse.y);
-        yaw_control -= rc_data[TEMP].mouse.x / 500.0f*pc_limit_yaw;
-        pitch_control += rc_data[TEMP].mouse.y / 60000.0f*pc_limit_pitch;
+        yaw_control -= rc_data[TEMP].mouse.x / 300.0f*pc_limit_yaw;
+        pitch_control += rc_data[TEMP].mouse.y / 30000.0f*pc_limit_pitch;
     }
+
 //遥控器控制
     else if (mode == GIMBAL_RC_MODE){
         // if (gimbal_cmd_send.gimbal_yaw_max && rc_data[TEMP].rc.rocker_l_ < 0) {
@@ -282,8 +285,8 @@ static void Gimbal_control(int mode){
         rc_limit_pitch=brake_calc(limit_pitch_max, 5, gimbal_fetch_data.pitch_motor->measure.total_angle, limit_pitch_min, -(float)rc_data[TEMP].rc.rocker_l1);
         yaw_control -= 0.0012f * (float)rc_data[TEMP].rc.rocker_l_ * rc_limit_yaw;
         pitch_control -= 0.00002f * (float)rc_data[TEMP].rc.rocker_l1*rc_limit_pitch;
-        ;
     }
+
 //视觉控制
     else if (mode == GIMBAL_VISION_MODE){
         yaw_control   = (gimbal_fetch_data.gimbal_imu_data->output.INS_angle[INS_YAW_ADDRESS_OFFSET] + rec_yaw);
@@ -296,8 +299,8 @@ static void Gimbal_control(int mode){
     gimbal_cmd_send.yaw   = yaw_control;
     gimbal_cmd_send.pitch = pitch_control;
 
-    delta_yaw   = (gimbal_cmd_send.yaw - gimbal_cmd_send.yaw_last)*3;
-    delta_pitch = (gimbal_cmd_send.pitch - gimbal_cmd_send.pitch_last)*3;
+    delta_yaw   = (gimbal_cmd_send.yaw - gimbal_cmd_send.yaw_last)*8;
+    delta_pitch = (gimbal_cmd_send.pitch - gimbal_cmd_send.pitch_last)*2.5;
 }
 /**
  * @brief 视觉发送任务，将数据发送给上位机
