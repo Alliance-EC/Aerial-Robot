@@ -64,6 +64,8 @@ typedef struct
     DaemonInstance* daemon;
     uint32_t feed_cnt;
     float dt;
+    uint16_t Block_Time; // 堵转时间
+    int16_t loder_reverse;//反转标志位
 } DJIMotorInstance;
 
 /**

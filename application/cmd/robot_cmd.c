@@ -242,6 +242,7 @@ void UpDateUI()
     ui_cmd_send.friction_mode=shoot_cmd_send.friction_mode;
     ui_cmd_send.load_mode    = shoot_cmd_send.load_mode;
     ui_cmd_send.gimbal_mode=gimbal_cmd_send.gimbal_mode;
+    ui_cmd_send.loader_motor=shoot_fetch_data.loader_motor;
 }
 
 static void Shoot_control(int mode){

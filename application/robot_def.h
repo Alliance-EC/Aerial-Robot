@@ -173,12 +173,14 @@ typedef struct
     gimbal_mode_e gimbal_mode;
     DJIMotorInstance * yaw_motor;
     DJIMotorInstance *pitch_motor;
+    DJIMotorInstance *loader_motor;
     float shoot_rate; // 连续发射的射频,unit per s,发/秒
     shoot_mode_e shoot_mode;
     loader_mode_e load_mode;
     friction_mode_e friction_mode;
     float yaw_limit;
     float pitch_limit;
+
 } Ui_Ctrl_Cmd_s;
 
 // cmd发布的发射控制数据,由shoot订阅
@@ -214,6 +216,7 @@ typedef struct
 {
     // code to go here
     // ...
+    DJIMotorInstance *loader_motor;
 } Shoot_Upload_Data_s;
 
 typedef struct

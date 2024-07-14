@@ -90,6 +90,7 @@ void ShootInit()
         .motor_type = M2006 // 英雄使用m3508
     };
     loader = DJIMotorInit(&loader_config);
+    loader->loder_reverse=1;
 
     shoot_cmd_recv.shoot_mode = SHOOT_ON; // 初始化后摩擦轮进入准备模式,也可将右拨杆拨至上一次来手动开启
 
@@ -104,11 +105,9 @@ void ShootInit()
     DJIMotorOuterLoop(friction_r, SPEED_LOOP); // 切换到速度环=
 }
 
-uint16_t Block_Time;            // 堵转时间
 float speed_record[6] = {0}; // 第五个为最近的射速 第六个为平均射速
 float Shoot_Speed;           // 射速
 float speed_adj;             // 摩擦轮调速
-int16_t loder_reverse = 1;
 /**
  * @brief 堵转，弹速检测
  *
@@ -117,18 +116,18 @@ static void ShootCtrl(){
 //     //堵转时间检测
 //     //平均射速
 //     //摩擦轮调速
-if ((abs(loader->measure.speed_aps) < loader->motor_controller.speed_PID.Ref - 2000) && loder_reverse==1)
+if ((abs(loader->measure.speed_aps) < loader->motor_controller.speed_PID.Ref - 2000) && loader->loder_reverse==1)
     {
-    Block_Time++;
-} else if ((abs(loader->measure.speed_aps) >= loader->motor_controller.speed_PID.Ref - 2000) && loder_reverse == 1) {
-    Block_Time = 0;
+    loader->Block_Time++;
+} else if ((abs(loader->measure.speed_aps) >= loader->motor_controller.speed_PID.Ref - 2000) && loader->loder_reverse == 1) {
+    loader->Block_Time = 0;
 }
-    if(Block_Time >= 100 && loder_reverse==1){
-        loder_reverse = -1;
-    } else if (Block_Time >=100 && loder_reverse == -1){
+    if(loader->Block_Time >= 100 && loader->loder_reverse==1){
+        loader->loder_reverse = -1;
+    } else if (loader->Block_Time >=100 && loader->loder_reverse == -1){
         osDelay(500);
-        loder_reverse=1;
-        Block_Time=0;
+        loader->loder_reverse=1;
+        loader->Block_Time=0;
     }
 }
 
@@ -179,7 +178,7 @@ void ShootTask()
         case LOAD_BURSTFIRE:
             ShootCtrl();
             DJIMotorOuterLoop(loader, SPEED_LOOP);
-            DJIMotorSetRef(loader, (shoot_cmd_recv.shoot_rate * 360 * REDUCTION_RATIO_LOADER / 8)*loder_reverse);
+            DJIMotorSetRef(loader, (shoot_cmd_recv.shoot_rate * 360 * REDUCTION_RATIO_LOADER / 8)*loader->loder_reverse);
             // DJIMotorSetRef(loader, 27000);
 
             // x颗/秒换算成速度: 已知一圈的载弹量,由此计算出1s需要转的角度,注意换算角速度(DJIMotor的速度单位是angle per second)
@@ -223,5 +222,6 @@ void ShootTask()
     delta_speed_r = friction_r->measure.speed_aps +45000;
     friction_mode_last = shoot_cmd_recv.friction_mode;
     // 反馈数据,目前暂时没有要设定的反馈数据,后续可能增加应用离线监测以及卡弹反馈
-     PubPushMessage(shoot_pub, (void *)&shoot_feedback_data);
+    shoot_feedback_data.loader_motor=loader;
+    PubPushMessage(shoot_pub, (void *)&shoot_feedback_data);
 }
