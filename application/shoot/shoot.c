@@ -108,7 +108,7 @@ uint16_t Block_Time;            // 堵转时间
 float speed_record[6] = {0}; // 第五个为最近的射速 第六个为平均射速
 float Shoot_Speed;           // 射速
 float speed_adj;             // 摩擦轮调速
-uint16_t loder_reverse = 1;
+int16_t loder_reverse = 1;
 /**
  * @brief 堵转，弹速检测
  *
@@ -117,17 +117,18 @@ static void ShootCtrl(){
 //     //堵转时间检测
 //     //平均射速
 //     //摩擦轮调速
-    if(abs(loader->measure.speed_aps) < loader->motor_controller.speed_PID.Ref - 2000){
-        Block_Time++;
-    }
-    else{
-        Block_Time = 0;
-    }
-    if(Block_Time >= 300){
+if ((abs(loader->measure.speed_aps) < loader->motor_controller.speed_PID.Ref - 2000) && loder_reverse==1)
+    {
+    Block_Time++;
+} else if ((abs(loader->measure.speed_aps) >= loader->motor_controller.speed_PID.Ref - 2000) && loder_reverse == 1) {
+    Block_Time = 0;
+}
+    if(Block_Time >= 100 && loder_reverse==1){
         loder_reverse = -1;
-    }
-    else{
-        loder_reverse = 1;
+    } else if (Block_Time >=100 && loder_reverse == -1){
+        osDelay(500);
+        loder_reverse=1;
+        Block_Time=0;
     }
 }
 
@@ -135,13 +136,6 @@ float loader_angle;
 /* 机器人发射机构控制核心任务 */
 void ShootTask()
 {
-    // if (UI_timer < 10) {
-    //     UI_timer++;
-    // } else {
-    //     UI_timer = 0;
-    //     My_UIGraphRefresh();
-    // }
-
     // 从cmd获取控制数据
     SubGetMessage(shoot_sub, &shoot_cmd_recv);
     // 对shoot mode等于SHOOT_STOP的情况特殊处理,直接停止所有电机(紧急停止)

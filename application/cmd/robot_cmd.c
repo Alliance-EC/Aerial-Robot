@@ -141,7 +141,7 @@ float pitch_control; // 遥控器PITCH自由度输入值
 static void RC_CONTROL_MODE()
 {
     shoot_cmd_send.shoot_mode = SHOOT_ON;    // 发射机构常开
-    shoot_cmd_send.shoot_rate = 20;          // 射频默认25Hz
+    shoot_cmd_send.shoot_rate = 23;          // 射频默认25Hz
 
     if ((rc_data[TEMP].rc.dial > 440)) {
             Send_Once_Flag = 0; // UI重新发送
@@ -178,7 +178,7 @@ static void PC_CONTROL_MODE()
     {
         // 按住鼠标右键且视觉识别到目标
         shoot_cmd_send.shoot_mode = SHOOT_ON; // 发射机构常开
-        shoot_cmd_send.shoot_rate = 20;       // 射频默认25Hz
+        shoot_cmd_send.shoot_rate = 23;       // 射频默认25Hz
         gimbal_cmd_send.gimbal_mode=GIMBAL_PC_MODE;
 
         //控制云台
