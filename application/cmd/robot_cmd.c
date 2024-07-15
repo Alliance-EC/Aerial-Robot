@@ -207,7 +207,7 @@ static void PC_CONTROL_MODE()
         if (rc_data[TEMP].key[KEY_PRESS].c){
             shoot_cmd_send.friction_mode =FRICTION_ON;
         }
-        if (rc_data[TEMP].key[KEY_PRESS_WITH_SHIFT].c){
+        if (rc_data[TEMP].key[KEY_PRESS].x){
             shoot_cmd_send.friction_mode =FRICTION_OFF;
         }
 
