@@ -207,7 +207,7 @@ void My_UIGraphRefresh()
         // UIGraphRefresh(&referee_info.referee_id, 7, UI[2], UI[3], UI[4], UI[5], UI[6], UI[7], UI[1]);
         // UIGraphRefresh(&referee_info.referee_id, 7, UI[0], UI[1], UI[2], UI[3], UI[4], UI[5], UI[0]);
         UIGraphRefresh(&referee_info.referee_id, 7, UI[Fan_Circle_l1], UI[Fan_Circle_l2], UI[Fan_Circle_r1], UI[Fan_Circle_r2], UI[Gimbal_Yaw_Float], UI[Gimbal_Pitch_Float], UI[Shoot_Line]);
-        UIGraphRefresh(&referee_info.referee_id, 7, UI[Shoot_Loader_Circle], UI[Mode_Rectangle], UI[Music_Rectangle_1], UI[Music_Rectangle_2], UI[Music_Rectangle_3], UI[Gimbal_Pitch_Float], UI[Shoot_Line]);
+        UIGraphRefresh(&referee_info.referee_id, 7, UI[Shoot_Loader_Circle], UI[Mode_Rectangle], UI[Music_Rectangle_1], UI[Music_Rectangle_2], UI[Music_Rectangle_3], UI[Shoot_Friction_Circle_l], UI[Shoot_Friction_Circle_r]);
         }
 
     for (int i=1;i<=LENGTH;){

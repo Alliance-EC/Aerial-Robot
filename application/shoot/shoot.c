@@ -201,8 +201,8 @@ void ShootTask()
             ramp_init(&shoot_ramp_l, RAMP_TIME);
             ramp_init(&shoot_ramp_r, RAMP_TIME);
         }
-        DJIMotorSetRef(friction_l, 45000*ramp_calc(&shoot_ramp_l)); // 42500
-        DJIMotorSetRef(friction_r, 45000*ramp_calc(&shoot_ramp_r));
+        DJIMotorSetRef(friction_l, 43000*ramp_calc(&shoot_ramp_l)); // 42500
+        DJIMotorSetRef(friction_r, 43000*ramp_calc(&shoot_ramp_r));
     } 
     else if (shoot_cmd_recv.friction_mode == FRICTION_REVERSE) {
         // DJIMotorSetRef(friction_l, -150);
@@ -214,8 +214,8 @@ void ShootTask()
             ramp_init(&shoot_ramp_r, RAMP_TIME);
         }
 
-        DJIMotorSetRef(friction_r, 45000 * (1 - ramp_calc(&shoot_ramp_r)));
-        DJIMotorSetRef(friction_l, 45000 * (1 - ramp_calc(&shoot_ramp_l)));
+        DJIMotorSetRef(friction_r, 43000 * (1 - ramp_calc(&shoot_ramp_r)));
+        DJIMotorSetRef(friction_l, 43000 * (1 - ramp_calc(&shoot_ramp_l)));
     }
     delta_friction=friction_l->measure.speed_aps+ friction_r->measure.speed_aps;
     delta_speed_l = friction_l->measure.speed_aps -45000;
