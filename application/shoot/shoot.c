@@ -90,6 +90,12 @@ void ShootInit()
         .motor_type = M2006 // 英雄使用m3508
     };
     loader = DJIMotorInit(&loader_config);
+
+    //堵转时间赋初值
+    loader->Block_Time=0;
+    friction_r->Block_Time=0;
+    friction_l->Block_Time=0;
+    
     loader->loder_reverse=1;
 
     shoot_cmd_recv.shoot_mode = SHOOT_ON; // 初始化后摩擦轮进入准备模式,也可将右拨杆拨至上一次来手动开启

@@ -26,7 +26,8 @@
       "cstdint": "c",
       "UI.C": "cpp",
       "cmath": "c",
-      "*.tcc": "c"
+      "*.tcc": "c",
+      "limits": "c"
     },
     "[yaml]": {
       "editor.insertSpaces": true,

@@ -269,8 +269,8 @@ static void Gimbal_control(int mode){
 
 //键鼠控制
     if (mode ==GIMBAL_PC_MODE){
-        pc_limit_yaw=brake_calc(limit_yaw_max, 20, gimbal_fetch_data.yaw_motor->measure.total_angle, limit_yaw_min, -rc_data[TEMP].mouse.x);
-        pc_limit_pitch=brake_calc(limit_pitch_max, 5, gimbal_fetch_data.pitch_motor->measure.total_angle, limit_pitch_min, rc_data[TEMP].mouse.y);
+        pc_limit_yaw=brake_calc(limit_yaw_max, 20, gimbal_fetch_data.yaw_motor, limit_yaw_min, -rc_data[TEMP].mouse.x);
+        pc_limit_pitch=brake_calc(limit_pitch_max, 5, gimbal_fetch_data.pitch_motor, limit_pitch_min, rc_data[TEMP].mouse.y);
         yaw_control -= rc_data[TEMP].mouse.x / 300.0f*pc_limit_yaw;
         pitch_control += rc_data[TEMP].mouse.y / 30000.0f*pc_limit_pitch;
     }
@@ -282,8 +282,8 @@ static void Gimbal_control(int mode){
         // } else {
         //     ramp_init(&yaw_limit_ramp, 20);
         // }
-        rc_limit_yaw=brake_calc(limit_yaw_max, 10, gimbal_fetch_data.yaw_motor->measure.total_angle, limit_yaw_min, (float)rc_data[TEMP].rc.rocker_l_*(-1));
-        rc_limit_pitch=brake_calc(limit_pitch_max, 5, gimbal_fetch_data.pitch_motor->measure.total_angle, limit_pitch_min, -(float)rc_data[TEMP].rc.rocker_l1);
+        rc_limit_yaw=brake_calc(limit_yaw_max, 10, gimbal_fetch_data.yaw_motor, limit_yaw_min, (float)rc_data[TEMP].rc.rocker_l_*(-1));
+        rc_limit_pitch=brake_calc(limit_pitch_max, 5, gimbal_fetch_data.pitch_motor, limit_pitch_min, -(float)rc_data[TEMP].rc.rocker_l1);
         yaw_control -= 0.0012f * (float)rc_data[TEMP].rc.rocker_l_ * rc_limit_yaw;
         pitch_control -= 0.00002f * (float)rc_data[TEMP].rc.rocker_l1*rc_limit_pitch;
     }
@@ -302,6 +302,9 @@ static void Gimbal_control(int mode){
 
     delta_yaw   = (gimbal_cmd_send.yaw - gimbal_cmd_send.yaw_last)*8;
     delta_pitch = (gimbal_cmd_send.pitch - gimbal_cmd_send.pitch_last)*2.5;
+    // if (delta_yaw == 0 && delta_pitch==0){
+    //     // gimbal_keep();
+    // }
 }
 /**
  * @brief 视觉发送任务，将数据发送给上位机

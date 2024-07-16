@@ -148,6 +148,8 @@ void GimbalInit()
     yaw_motor   = DJIMotorInit(&yaw_config);
     pitch_motor = DJIMotorInit(&pitch_config);
 
+    yaw_motor->Block_Time=0;
+    pitch_motor->Block_Time=0;
     gimbal_pub = PubRegister("gimbal_feed", sizeof(Gimbal_Upload_Data_s));
     gimbal_sub = SubRegister("gimbal_cmd", sizeof(Gimbal_Ctrl_Cmd_s));
 }
