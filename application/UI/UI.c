@@ -113,7 +113,6 @@ void ui_init(){
     mode_start_y=300;
     DeterminRobotID();
     //飞机模型
-   
 }
 
 void My_UIGraphRefresh()
