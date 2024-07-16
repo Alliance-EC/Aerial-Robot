@@ -42,7 +42,7 @@ float ramp_calc(ramp_t *ramp)
     return ramp->out;
 }
 
-float brake_calc(float max, float brake, DJIMotorInstance * motor, float min, float cmd)
+float brake_calc(float max, float brake, DJIMotorInstance * motor, float min, float cmd,int mode)
 {
     float brake_out =1;
     //运动限位
@@ -61,15 +61,30 @@ float brake_calc(float max, float brake, DJIMotorInstance * motor, float min, fl
         brake_out=1;
     }
     //堵转检测
-    if (motor->motor_controller.angle_PID.Output && abs(motor->measure.speed_aps)<1 ){
+    if (mode==0){
+    if (abs(motor->motor_controller.speed_PID.Err)>320 ){
         motor->Block_Time++;
     }
     else {
         motor->Block_Time=0;
     }
 
-    if (motor->Block_Time>=20){
+    if (motor->Block_Time>=3){
         brake_out=0;
+    }
+    }
+
+    else if (mode ==1){
+         if (abs(motor->motor_controller.speed_PID.Err)>9){
+        motor->Block_Time++;
+    }
+    else {
+        motor->Block_Time=0;
+    }
+
+    if (motor->Block_Time>=3){
+        brake_out=0;
+    }
     }
 
     return brake_out;
