@@ -171,7 +171,7 @@ static void RC_CONTROL_MODE()
                 Shoot_control(gimbal_cmd_send.gimbal_mode);
             } 
         }
-    }
+}
 
 
 static void PC_CONTROL_MODE()
@@ -181,7 +181,6 @@ static void PC_CONTROL_MODE()
         shoot_cmd_send.shoot_rate = 23;       // 射频默认25Hz
         gimbal_cmd_send.gimbal_mode=GIMBAL_PC_MODE;
         shoot_cmd_send.set_shoot_count = rc_data[TEMP].mouse_count;
-
         //控制云台
         if (rc_data[TEMP].mouse.press_r) {
             // 相对角度控制

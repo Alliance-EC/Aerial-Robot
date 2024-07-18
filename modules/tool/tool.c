@@ -51,6 +51,7 @@ float brake_calc(float max, float brake, DJIMotorInstance * motor, float min, fl
             brake_out = 0;
         }
     }
+    //接近限位点时减速，可以降低撞到限位时的抖动。
     // else if (position >max - brake){
     //     brake_out=(max-position)/brake;
     // }
@@ -60,7 +61,9 @@ float brake_calc(float max, float brake, DJIMotorInstance * motor, float min, fl
     else {
         brake_out=1;
     }
+
     //堵转检测
+    //yaw
     if (mode==0){
     if (abs(motor->motor_controller.speed_PID.Err)>320 ){
         motor->Block_Time++;
@@ -68,12 +71,11 @@ float brake_calc(float max, float brake, DJIMotorInstance * motor, float min, fl
     else {
         motor->Block_Time=0;
     }
-
     if (motor->Block_Time>=3){
         brake_out=0;
     }
     }
-
+    //pitch
     else if (mode ==1){
          if (abs(motor->motor_controller.speed_PID.Err)>9){
         motor->Block_Time++;
