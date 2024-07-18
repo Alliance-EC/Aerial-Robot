@@ -180,6 +180,7 @@ static void PC_CONTROL_MODE()
         shoot_cmd_send.shoot_mode = SHOOT_ON; // 发射机构常开
         shoot_cmd_send.shoot_rate = 23;       // 射频默认25Hz
         gimbal_cmd_send.gimbal_mode=GIMBAL_PC_MODE;
+        shoot_cmd_send.set_shoot_count = rc_data[TEMP].mouse_count;
 
         //控制云台
         if (rc_data[TEMP].mouse.press_r) {

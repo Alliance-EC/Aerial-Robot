@@ -8,6 +8,11 @@
 #include "tool.h"
 #include "UI.h"
 
+#define MAX_HISTROY       10
+#define Fliter_windowSize 5.0f
+#define BLOCK_CURRENT     10000
+#define REVERSE_CURRENT   4000
+
 /* 对于双发射机构的机器人,将下面的数据封装成结构体即可,生成两份shoot应用实例 */
 static DJIMotorInstance *friction_l, *friction_r, *loader;
 
@@ -24,6 +29,60 @@ float delta_speed_l = 0;
 static float hibernate_time = 0, dead_time = 0;
 
 bool friction_mode_last =1;
+
+int heat_control    = 15; // 热量控制
+float local_heat    = 0;  // 本地热量
+int One_bullet_heat = 10; // 打一发消耗热量
+uint32_t shoot_count;      // 已发弹量
+// 热量控制算法
+void Shoot_Fric_data_process()
+{
+    /*----------------------------------变量常量------------------------------------------*/
+    static bool bullet_waiting_confirm = false;                         // 等待比较器确认
+    float data                         = friction_l->measure.speed_aps; // 获取摩擦轮转速
+    static uint16_t data_histroy[MAX_HISTROY];                          // 做循环队列
+    static uint8_t head = 0, rear = 0;                                  // 队列下标
+    float moving_average[2];                                            // 移动平均滤波
+    uint8_t data_num;                                                   // 循环队列元素个数
+    float derivative;                                                   // 微分
+    /*-----------------------------------逻辑控制-----------------------------------------*/
+    data = abs(data);
+    /*入队*/
+    data_histroy[head] = data;
+    head++;
+    head %= MAX_HISTROY;
+    /*判断队列数据量*/
+    data_num = (head - rear + MAX_HISTROY) % MAX_HISTROY;
+    if (data_num >= Fliter_windowSize + 1) // 队列数据量满足要求
+    {
+        moving_average[0] = 0;
+        moving_average[1] = 0;
+        /*同时计算两个滤波*/
+        for (uint8_t i = rear, j = rear + 1, index = rear; index < rear + Fliter_windowSize; i++, j++, index++) {
+            i %= MAX_HISTROY;
+            j %= MAX_HISTROY;
+            moving_average[0] += data_histroy[i];
+            moving_average[1] += data_histroy[j];
+        }
+        moving_average[0] /= Fliter_windowSize;
+        moving_average[1] /= Fliter_windowSize;
+        /*滤波求导*/
+        derivative = moving_average[1] - moving_average[0];
+        /*导数比较*/
+        if (derivative < -300) {
+            bullet_waiting_confirm = true;
+        } else if (derivative > 50) {
+            if (bullet_waiting_confirm == true) {
+                local_heat += One_bullet_heat; // 确认打出
+                shoot_count++;
+                bullet_waiting_confirm = false;
+            }
+        }
+        rear++;
+        rear %= MAX_HISTROY;
+    }
+}
+
 void ShootInit()
 {
     // 左摩擦轮
@@ -108,7 +167,7 @@ void ShootInit()
     DJIMotorStop(loader);
 
     DJIMotorOuterLoop(friction_l, SPEED_LOOP); // 切换到速度环
-    DJIMotorOuterLoop(friction_r, SPEED_LOOP); // 切换到速度环=
+    DJIMotorOuterLoop(friction_r, SPEED_LOOP); // 切换到速度环
 }
 
 float speed_record[6] = {0}; // 第五个为最近的射速 第六个为平均射速
@@ -173,7 +232,7 @@ void ShootTask()
         // 单发模式,根据鼠标按下的时间,触发一次之后需要进入不响应输入的状态(否则按下的时间内可能多次进入,导致多次发射)
         case LOAD_1_BULLET:                                                               // 激活能量机关/干扰对方用,英雄用.
             DJIMotorOuterLoop(loader, SPEED_LOOP);                                        // 切换到角度环
-            shoot_cmd_recv.shoot_rate = 2.5;                                                  // 设定射速为1,即单发
+            shoot_cmd_recv.shoot_rate = 2.5;                                                  // 设定射速为1,即单发 
             DJIMotorSetRef(loader, shoot_cmd_recv.shoot_rate * 360 * REDUCTION_RATIO_LOADER / 8); // 控制量增加一发弹丸的角度
             // DJIMotorOuterLoop(loader, ANGLE_LOOP);                                        // 切换到角度环
             // DJIMotorSetRef(loader, loader->measure.total_angle + ONE_BULLET_DELTA_ANGLE); // 控制量增加一发弹丸的角度
@@ -184,7 +243,12 @@ void ShootTask()
         case LOAD_BURSTFIRE:
             ShootCtrl();
             DJIMotorOuterLoop(loader, SPEED_LOOP);
+            if (shoot_count<shoot_cmd_recv.set_shoot_count){
             DJIMotorSetRef(loader, (shoot_cmd_recv.shoot_rate * 360 * REDUCTION_RATIO_LOADER / 8)*loader->loder_reverse);
+            }
+            else {
+                DJIMotorSetRef(loader,0);
+            }
             // DJIMotorSetRef(loader, 27000);
 
             // x颗/秒换算成速度: 已知一圈的载弹量,由此计算出1s需要转的角度,注意换算角速度(DJIMotor的速度单位是angle per second)
@@ -206,6 +270,7 @@ void ShootTask()
         if (friction_mode_last==FRICTION_OFF){
             ramp_init(&shoot_ramp_l, RAMP_TIME);
             ramp_init(&shoot_ramp_r, RAMP_TIME);
+            shoot_count-=1;
         }
         DJIMotorSetRef(friction_l, 43000*ramp_calc(&shoot_ramp_l)); // 42500
         DJIMotorSetRef(friction_r, 43000*ramp_calc(&shoot_ramp_r));
@@ -218,6 +283,7 @@ void ShootTask()
         if (friction_mode_last == FRICTION_ON) {
             ramp_init(&shoot_ramp_l, RAMP_TIME);
             ramp_init(&shoot_ramp_r, RAMP_TIME);
+
         }
 
         DJIMotorSetRef(friction_r, 43000 * (1 - ramp_calc(&shoot_ramp_r)));
@@ -227,7 +293,9 @@ void ShootTask()
     delta_speed_l = friction_l->measure.speed_aps -45000;
     delta_speed_r = friction_r->measure.speed_aps +45000;
     friction_mode_last = shoot_cmd_recv.friction_mode;
-    // 反馈数据,目前暂时没有要设定的反馈数据,后续可能增加应用离线监测以及卡弹反馈
-    shoot_feedback_data.loader_motor=loader;
+
+    Shoot_Fric_data_process();
+        // 反馈数据,目前暂时没有要设定的反馈数据,后续可能增加应用离线监测以及卡弹反馈
+        shoot_feedback_data.loader_motor = loader;
     PubPushMessage(shoot_pub, (void *)&shoot_feedback_data);
 }

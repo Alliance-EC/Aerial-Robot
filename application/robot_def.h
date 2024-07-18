@@ -193,7 +193,9 @@ typedef struct
         Bullet_Speed_limit_e bullet_speed; // 弹速枚举
     uint8_t rest_heat;
     float shoot_rate; // 连续发射的射频,unit per s,发/秒
-
+    
+    uint32_t set_shoot_count;//允许发弹量
+    
     float delta_angle_abs;//开始刹车的区间
 } Shoot_Ctrl_Cmd_s;
 

@@ -6,7 +6,7 @@
 #define BLOCK_CURRENT 10000
 #define REVERSE_CURRENT 4000
 
-void Shoot_Fric_data_process(void);
+void Shoot_Fric_data_process();
 /**
  * @brief 发射初始化,会被RobotInit()调用
  * 

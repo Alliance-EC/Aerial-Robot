@@ -105,7 +105,11 @@ static void sbus_to_rc(const uint8_t *sbus_buf)
     //         rc_ctrl[TEMP].key_count[KEY_PRESS_WITH_SHIFT][i]++;
     // }
 
-    memcpy(&rc_ctrl[LAST], &rc_ctrl[TEMP], sizeof(RC_ctrl_t)); // 保存上一次的数据,用于按键持续按下和切换的判断
+    if (rc_ctrl[TEMP].mouse.press_l == 1 && rc_ctrl[LAST].mouse.press_l==0){
+        rc_ctrl[TEMP].mouse_count++;
+    }
+
+        memcpy(&rc_ctrl[LAST], &rc_ctrl[TEMP], sizeof(RC_ctrl_t)); // 保存上一次的数据,用于按键持续按下和切换的判断
 }
 
 /**
