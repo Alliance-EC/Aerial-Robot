@@ -30,9 +30,6 @@ static float hibernate_time = 0, dead_time = 0;
 
 bool friction_mode_last =1;
 
-int heat_control    = 15; // 热量控制
-float local_heat    = 0;  // 本地热量
-int One_bullet_heat = 10; // 打一发消耗热量
 uint32_t shoot_count;      // 已发弹量
 // 热量控制算法
 void Shoot_Fric_data_process()
@@ -73,7 +70,6 @@ void Shoot_Fric_data_process()
             bullet_waiting_confirm = true;
         } else if (derivative > 50) {
             if (bullet_waiting_confirm == true) {
-                local_heat += One_bullet_heat; // 确认打出
                 shoot_count++;
                 bullet_waiting_confirm = false;
             }
