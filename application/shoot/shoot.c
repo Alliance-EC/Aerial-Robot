@@ -54,7 +54,7 @@ void Shoot_Fric_data_process()
     {
         moving_average[0] = 0;
         moving_average[1] = 0;
-        /*同时计算两个滤波*/
+        /*同时计算两个滤波1*/
         for (uint8_t i = rear, j = rear + 1, index = rear; index < rear + Fliter_windowSize; i++, j++, index++) {
             i %= MAX_HISTROY;
             j %= MAX_HISTROY;
