@@ -17,10 +17,10 @@
 #include "bsp_log.h"
 
 
-#define YAW_ANGLE_MAX 41
-#define YAW_ANGLE_MIN -97
-#define PITCH_ANGLE_MAX -8
-#define PITCH_ANGLE_MIN -35
+#define YAW_ANGLE_MAX 40
+#define YAW_ANGLE_MIN -60
+#define PITCH_ANGLE_MAX -70
+#define PITCH_ANGLE_MIN -94.7
 
 #if PITCH_FEED_TYPE                                                  // Pitch 电机反馈数据源为陀螺仪
 #define PTICH_HORIZON_ANGLE 0                                        // PITCH水平时电机的角度
@@ -103,6 +103,8 @@ void HOST_RECV_CALLBACK()
 {
     memcpy(vision_recv_data, host_instance->comm_instance, host_instance->RECV_SIZE);
     vision_recv_data[8] = 1;
+    //  {AA AA AA AA __ AA AA AA }
+                //01 02 03
 }
 void RobotCMDInit()
 {

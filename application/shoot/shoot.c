@@ -239,12 +239,12 @@ void ShootTask()
         case LOAD_BURSTFIRE:
             ShootCtrl();
             DJIMotorOuterLoop(loader, SPEED_LOOP);
-            if (shoot_count<shoot_cmd_recv.set_shoot_count){
+            //if (shoot_count<shoot_cmd_recv.set_shoot_count){
             DJIMotorSetRef(loader, (shoot_cmd_recv.shoot_rate * 360 * REDUCTION_RATIO_LOADER / 8)*loader->loder_reverse);
-            }
-            else {
-                DJIMotorSetRef(loader,0);
-            }
+            //}
+            //else {
+              //  DJIMotorSetRef(loader,0);
+            //}
             // DJIMotorSetRef(loader, 27000);
 
             // x颗/秒换算成速度: 已知一圈的载弹量,由此计算出1s需要转的角度,注意换算角速度(DJIMotor的速度单位是angle per second)
