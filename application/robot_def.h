@@ -212,6 +212,8 @@ typedef struct
     INS_Instance *gimbal_imu_data;
     DJIMotorInstance * yaw_motor;
     DJIMotorInstance *pitch_motor;
+
+    float yaw_init_angle;
 } Gimbal_Upload_Data_s;
 
 typedef struct

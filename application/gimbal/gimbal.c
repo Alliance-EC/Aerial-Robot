@@ -24,7 +24,8 @@ static referee_info_t *referee_data; // 用于获取裁判系统的数据
 
 extern float delta_pitch;
 extern float delta_yaw;
-
+float init_angle;
+int flag =1;
 void GimbalInit()
 {
     BMI088_Init_Config_s config = {
@@ -160,6 +161,10 @@ void GimbalTask()
     // 获取云台控制数据
     // 后续增加未收到数据的处理
     SubGetMessage(gimbal_sub, &gimbal_cmd_recv);
+    if (flag){
+    init_angle = yaw_motor->measure.total_angle;
+    flag=0;
+    }
     if (gimbal_cmd_recv.gimbal_mode == GIMBAL_ZERO_FORCE)
     {
         // 停止
@@ -180,6 +185,7 @@ void GimbalTask()
     gimbal_feedback_data.gimbal_imu_data              = gimbal_IMU_data;
     gimbal_feedback_data.yaw_motor              = yaw_motor;
     gimbal_feedback_data.pitch_motor=pitch_motor;
+    gimbal_feedback_data.yaw_init_angle=init_angle;
         // 推送消息
         PubPushMessage(gimbal_pub, (void *)&gimbal_feedback_data);
 }

@@ -1,6 +1,7 @@
 // app
 #include "robot_def.h"
 #include "robot_cmd.h"
+#include "gimbal.h"
 // module
 #include "remote_control.h"
 #include "ins_task.h"
@@ -21,6 +22,7 @@
 #define YAW_ANGLE_MIN -60
 #define PITCH_ANGLE_MAX -11
 #define PITCH_ANGLE_MIN -32
+#define YAW_MID_ANGLE 33.5
 
 #if PITCH_FEED_TYPE                                                  // Pitch 电机反馈数据源为陀螺仪
 #define PTICH_HORIZON_ANGLE 0                                        // PITCH水平时电机的角度
@@ -76,7 +78,7 @@ static Robot_Status_e robot_state; // 机器人整体工作状态
 Referee_Interactive_info_t Referee_Interactive_info;    // 发送给UI绘制的数据
 auto_shoot_mode_e AutoShooting_flag = AutoShooting_Off; // 自动射击标志位
 extern char Send_Once_Flag;                             // 初始化UI标志
-
+extern float init_angle;
 
 float limit_yaw_max = YAW_ANGLE_MAX, limit_yaw_min = YAW_ANGLE_MIN;
 float limit_pitch_max = PITCH_ANGLE_MAX, limit_pitch_min = PITCH_ANGLE_MIN;
@@ -84,6 +86,7 @@ float delta_pitch =0;
 float delta_yaw   = 0;
 int remote_work_condition = 0; // 遥控器是否离线判断
 int pc_enable =-1;
+int flag_once =1;
 float rec_yaw, rec_pitch;
 int friction_pre=0;
 int loader_pre=0;
@@ -92,8 +95,11 @@ float pc_limit_yaw=0,pc_limit_pitch=0;
 float rc_limit_yaw=0,rc_limit_pitch=0;
 bool shoot_cmd; // 接受上位机的火控指令
 
+float yaw_control;   // 遥控器YAW自由度输入值
+float pitch_control; // 遥控器PITCH自由度输入值
+
 static void RobotReset() ;
-static void EmergencyHandler() ;
+static void EmergencyHandler();
 //static void Shoot_control() ;
 static void Gimbal_control(int mode);
 void HOST_RECV_CALLBACK()
@@ -130,8 +136,6 @@ void RobotCMDInit()
     robot_state = ROBOT_READY; // 启动时机器人进入工作模式,后续加入所有应用初始化完成之后再进入
 }
 
-float yaw_control;   // 遥控器YAW自由度输入值
-float pitch_control; // 遥控器PITCH自由度输入值
 
 /**
  * @brief 控制输入为遥控器(调试时)的模式和控制量设置
@@ -360,14 +364,16 @@ void RobotCMDTask()
 #endif // GIMBAL_BOARD
     SubGetMessage(shoot_feed_sub, &shoot_fetch_data);
     SubGetMessage(gimbal_feed_sub, &gimbal_fetch_data);
-
-    
-    //if (switch_is_up(rc_data[TEMP].rc.switch_left) && (switch_is_up(rc_data[TEMP].rc.switch_right))) // 遥控器拨杆双[上],键鼠控制
-        PC_CONTROL_MODE(); 
-    //} else {
-        RC_CONTROL_MODE();
+    if (flag_once&&init_angle!=0){
+        yaw_control = YAW_MID_ANGLE - init_angle;
+        flag_once   = 0;
+    }
         if (switch_is_down(rc_data[TEMP].rc.switch_left) && switch_is_down(rc_data[TEMP].rc.switch_right)) //{ //双[下]，急停
         EmergencyHandler();
+        else{
+            PC_CONTROL_MODE();
+            RC_CONTROL_MODE();
+        }
     //}
 
     // Gimbal_control(gimbal_cmd_send.gimbal_mode);
