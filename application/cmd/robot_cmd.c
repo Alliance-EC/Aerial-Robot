@@ -19,8 +19,8 @@
 
 #define YAW_ANGLE_MAX 40
 #define YAW_ANGLE_MIN -60
-#define PITCH_ANGLE_MAX -70
-#define PITCH_ANGLE_MIN -94.7
+#define PITCH_ANGLE_MAX -11
+#define PITCH_ANGLE_MIN -32
 
 #if PITCH_FEED_TYPE                                                  // Pitch 电机反馈数据源为陀螺仪
 #define PTICH_HORIZON_ANGLE 0                                        // PITCH水平时电机的角度
@@ -83,22 +83,19 @@ float limit_pitch_max = PITCH_ANGLE_MAX, limit_pitch_min = PITCH_ANGLE_MIN;
 float delta_pitch =0;
 float delta_yaw   = 0;
 int remote_work_condition = 0; // 遥控器是否离线判断
-
+int pc_enable =-1;
 float rec_yaw, rec_pitch;
-
+int friction_pre=0;
+int loader_pre=0;
+int last_is_mid =0;
 float pc_limit_yaw=0,pc_limit_pitch=0;
 float rc_limit_yaw=0,rc_limit_pitch=0;
 bool shoot_cmd; // 接受上位机的火控指令
 
-int Cover_Open_Flag; // 弹舱打开标志位
-
-int Shoot_Mode_Flag; // 发射模式标志位
-int Shoot_Run_Flag;  // 摩擦轮标志位
-
 static void RobotReset() ;
 static void EmergencyHandler() ;
-static void Shoot_control() ;
-
+//static void Shoot_control() ;
+static void Gimbal_control(int mode);
 void HOST_RECV_CALLBACK()
 {
     memcpy(vision_recv_data, host_instance->comm_instance, host_instance->RECV_SIZE);
@@ -144,46 +141,74 @@ static void RC_CONTROL_MODE()
 {
     shoot_cmd_send.shoot_mode = SHOOT_ON;    // 发射机构常开
     shoot_cmd_send.shoot_rate = 23;          // 射频默认25Hz
-
-    if ((rc_data[TEMP].rc.dial > 440)) {
-            Send_Once_Flag = 0; // UI重新发送
+    gimbal_cmd_send.gimbal_mode=GIMBAL_RC_MODE;
+    if (switch_is_mid(rc_data[TEMP].rc.switch_right) && switch_is_up(rc_data[TEMP].rc.switch_left)){
+        if (last_is_mid){
+            if(friction_pre) pc_enable=0;
+        friction_pre++;
+        friction_pre%=2;
         }
-    // 左侧开关为[上]右侧开关为[下]，且接收到上位机的相对角度,视觉模式
-    if ((switch_is_down(rc_data[TEMP].rc.switch_right) && switch_is_up(rc_data[TEMP].rc.switch_left))) {
-            shoot_cmd_send.friction_mode = FRICTION_OFF;
-            Shoot_control(gimbal_cmd_send.gimbal_mode);
-            gimbal_cmd_send.gimbal_mode = GIMBAL_VISION_MODE;
-
-            // 使用相对角度控制
-            memcpy(&rec_yaw, vision_recv_data, sizeof(float));
-            memcpy(&rec_pitch, vision_recv_data + 4, sizeof(float));
-            if ((rec_yaw == 0 && rec_pitch == 0) || vision_recv_data[8] == 0) {
-                // 视觉未识别到目标,纯遥控器拨杆控制
-                // 按照摇杆的输出大小进行角度增量,增益系数需调整
-                // 控制云台旋转
-            gimbal_cmd_send.gimbal_mode=GIMBAL_RC_MODE;
-            } else {
-                gimbal_cmd_send.gimbal_mode = GIMBAL_VISION_MODE;
+        last_is_mid=0;
+    }
+    if (switch_is_mid(rc_data[TEMP].rc.switch_right) && switch_is_down(rc_data[TEMP].rc.switch_left)){
+        if (last_is_mid){
+        loader_pre++;
+        loader_pre%=2;
+        }
+        last_is_mid=0;
+    }
+    if (switch_is_mid(rc_data[TEMP].rc.switch_right) && switch_is_mid(rc_data[TEMP].rc.switch_left)){
+        if (friction_pre){
+            if (rc_data[TEMP].key[KEY_PRESS].v==0)shoot_cmd_send.friction_mode=FRICTION_ON;
+            else friction_pre=0;
+        }
+        else {
+            if (rc_data[TEMP].key[KEY_PRESS].c){
+            shoot_cmd_send.friction_mode =FRICTION_ON;
+            pc_enable=1;
             }
-        } else {
-            gimbal_cmd_send.gimbal_mode = GIMBAL_RC_MODE;
-            if (switch_is_mid(rc_data[TEMP].rc.switch_right) && switch_is_up(rc_data[TEMP].rc.switch_left)) // 左侧开关状态[上],右侧开关状态[中],底盘和云台分离,摩擦轮启动
-            {
-                shoot_cmd_send.friction_mode = FRICTION_ON;
-                Shoot_control(gimbal_cmd_send.gimbal_mode);
-            } 
+            else if (pc_enable==0){shoot_cmd_send.friction_mode=FRICTION_OFF;} 
         }
+        if (loader_pre || rc_data[TEMP].mouse.press_l){
+        shoot_cmd_send.load_mode=LOAD_BURSTFIRE;
+        }
+        else{
+            shoot_cmd_send.load_mode=LOAD_STOP;
+        }
+        last_is_mid=1;
+    }
+    Gimbal_control(gimbal_cmd_send.gimbal_mode);
+    // // 左侧开关为[上]右侧开关为[下]，且接收到上位机的相对角度,视觉模式
+    // if ((switch_is_down(rc_data[TEMP].rc.switch_right) && switch_is_up(rc_data[TEMP].rc.switch_left))) {
+    //         shoot_cmd_send.friction_mode = FRICTION_OFF;
+    //         Shoot_control(gimbal_cmd_send.gimbal_mode);
+    //         gimbal_cmd_send.gimbal_mode = GIMBAL_VISION_MODE;
+
+    //         // 使用相对角度控制
+    //         memcpy(&rec_yaw, vision_recv_data, sizeof(float));
+    //         memcpy(&rec_pitch, vision_recv_data + 4, sizeof(float));
+    //         if ((rec_yaw == 0 && rec_pitch == 0) || vision_recv_data[8] == 0) {
+    //             // 视觉未识别到目标,纯遥控器拨杆控制
+    //             // 按照摇杆的输出大小进行角度增量,增益系数需调整
+    //             // 控制云台旋转
+    //         gimbal_cmd_send.gimbal_mode=GIMBAL_RC_MODE;
+    //         } else {
+    //             gimbal_cmd_send.gimbal_mode = GIMBAL_VISION_MODE;
+    //         }
+    //     } else {
+    //         gimbal_cmd_send.gimbal_mode = GIMBAL_RC_MODE;
+    //         if (switch_is_mid(rc_data[TEMP].rc.switch_right) && switch_is_up(rc_data[TEMP].rc.switch_left)) // 左侧开关状态[上],右侧开关状态[中],摩擦轮启动
+    //         {
+    //             shoot_cmd_send.friction_mode = FRICTION_ON;
+    //             Shoot_control(gimbal_cmd_send.gimbal_mode);
+    //         } 
+    //     }
 }
 
 
 static void PC_CONTROL_MODE()
     {
-        // 按住鼠标右键且视觉识别到目标
-        shoot_cmd_send.shoot_mode = SHOOT_ON; // 发射机构常开
-        shoot_cmd_send.shoot_rate = 23;       // 射频默认25Hz
-        gimbal_cmd_send.gimbal_mode=GIMBAL_PC_MODE;
-        shoot_cmd_send.set_shoot_count = rc_data[TEMP].mouse_count;
-        //控制云台
+        shoot_cmd_send.shoot_rate = 23;      
         if (rc_data[TEMP].mouse.press_r) {
             // 相对角度控制
             memcpy(&rec_yaw, vision_recv_data, sizeof(float));
@@ -199,21 +224,29 @@ static void PC_CONTROL_MODE()
         gimbal_cmd_send.yaw   = yaw_control;
         gimbal_cmd_send.pitch = pitch_control;
 
+        if (rc_data[TEMP].key[KEY_PRESS].c){
+            shoot_cmd_send.friction_mode =FRICTION_ON;
+            pc_enable=1;
+            friction_pre=1;
+            }
+            else if (rc_data[TEMP].key[KEY_PRESS].v){
+            shoot_cmd_send.friction_mode =FRICTION_OFF;
+            pc_enable=0;
+            friction_pre=0;
+        }
         
-        
+        if (rc_data[TEMP].mouse.press_l){
+            shoot_cmd_send.load_mode=LOAD_BURSTFIRE;
+        }
+        else {
+            shoot_cmd_send.load_mode=LOAD_STOP;
+        }
         //控制UI
         if (rc_data[TEMP].key[KEY_PRESS].r) {
             Send_Once_Flag = 0; // UI重新发送
         }
 
-        if (rc_data[TEMP].key[KEY_PRESS].c){
-            shoot_cmd_send.friction_mode =FRICTION_ON;
-        }
-        if (rc_data[TEMP].key[KEY_PRESS].x){
-            shoot_cmd_send.friction_mode =FRICTION_OFF;
-        }
-
-        Shoot_control(gimbal_cmd_send.gimbal_mode);
+        //Shoot_control(gimbal_cmd_send.gimbal_mode);
         RobotReset(); // 机器人复位处理
     }
     
@@ -247,54 +280,43 @@ void UpDateUI()
     ui_cmd_send.loader_motor=shoot_fetch_data.loader_motor;
 }
 
-static void Shoot_control(int mode){
-    if (mode == GIMBAL_RC_MODE){
-    if (rc_data[TEMP].rc.dial > 440) {
-        shoot_cmd_send.load_mode = LOAD_BURSTFIRE;
-    } else if (rc_data[TEMP].rc.dial < -440) {
-        shoot_cmd_send.load_mode = LOAD_1_BULLET;
-    } else {
-        shoot_cmd_send.load_mode = LOAD_STOP;
-    }
-    }
+// static void Shoot_control(int mode){
+//     if (mode == GIMBAL_RC_MODE){
+//     if (rc_data[TEMP].rc.dial > 440) {
+//         shoot_cmd_send.load_mode = LOAD_BURSTFIRE;
+//     } else if (rc_data[TEMP].rc.dial < -440) {
+//         shoot_cmd_send.load_mode = LOAD_1_BULLET;
+//     } else {
+//         shoot_cmd_send.load_mode = LOAD_STOP;
+//     }
+//     }
 
-    else if (mode == GIMBAL_PC_MODE){
-        if (rc_data[TEMP].mouse.press_l){
-            shoot_cmd_send.load_mode = LOAD_BURSTFIRE;
-        }
-        else {
-            shoot_cmd_send.load_mode = LOAD_STOP;
-        }
-    }
-}
+//     else if (mode == GIMBAL_PC_MODE){
+//         if (rc_data[TEMP].mouse.press_l){
+//             shoot_cmd_send.load_mode = LOAD_BURSTFIRE;
+//         }
+//         else {
+//             shoot_cmd_send.load_mode = LOAD_STOP;
+//         }
+//     }
+// }
 static void Gimbal_control(int mode){
-
-//键鼠控制
-    if (mode ==GIMBAL_PC_MODE){
         pc_limit_yaw=brake_calc(limit_yaw_max, 20, gimbal_fetch_data.yaw_motor, limit_yaw_min, -rc_data[TEMP].mouse.x,0);
         pc_limit_pitch=brake_calc(limit_pitch_max, 5, gimbal_fetch_data.pitch_motor, limit_pitch_min, rc_data[TEMP].mouse.y,1);
-        yaw_control -= rc_data[TEMP].mouse.x / 300.0f*pc_limit_yaw;
-        pitch_control += rc_data[TEMP].mouse.y / 30000.0f*pc_limit_pitch;
-    }
+        // yaw_control -= rc_data[TEMP].mouse.x / 300.0f*pc_limit_yaw;
+        // pitch_control += rc_data[TEMP].mouse.y / 30000.0f*pc_limit_pitch;
 
-//遥控器控制
-    else if (mode == GIMBAL_RC_MODE){
-        // if (gimbal_cmd_send.gimbal_yaw_max && rc_data[TEMP].rc.rocker_l_ < 0) {
-        // } else if (gimbal_cmd_send.gimbal_yaw_min && rc_data[TEMP].rc.rocker_l_ > 0) {
-        // } else {
-        //     ramp_init(&yaw_limit_ramp, 20);
-        // }
         rc_limit_yaw=brake_calc(limit_yaw_max, 10, gimbal_fetch_data.yaw_motor, limit_yaw_min, (float)rc_data[TEMP].rc.rocker_l_*(-1),0);
-        rc_limit_pitch=brake_calc(limit_pitch_max, 5, gimbal_fetch_data.pitch_motor, limit_pitch_min, -(float)rc_data[TEMP].rc.rocker_l1,1);
-        yaw_control -= 0.0012f * (float)rc_data[TEMP].rc.rocker_l_ * rc_limit_yaw;
-        pitch_control -= 0.00002f * (float)rc_data[TEMP].rc.rocker_l1*rc_limit_pitch;
-    }
+        rc_limit_pitch=brake_calc(limit_pitch_max, 5, gimbal_fetch_data.pitch_motor, limit_pitch_min, (-1)*(float)rc_data[TEMP].rc.rocker_l1,1);
+        
+        yaw_control = yaw_control-rc_limit_yaw*0.0012f * (float)rc_data[TEMP].rc.rocker_l_-rc_data[TEMP].mouse.x / 350.0f*pc_limit_yaw;
+        pitch_control =pitch_control-rc_limit_pitch*0.00002f * (float)rc_data[TEMP].rc.rocker_l1+rc_data[TEMP].mouse.y / 30000.0f*pc_limit_pitch;
 
 //视觉控制
-    else if (mode == GIMBAL_VISION_MODE){
-        yaw_control   = (gimbal_fetch_data.gimbal_imu_data->output.INS_angle[INS_YAW_ADDRESS_OFFSET] + rec_yaw);
-        pitch_control = gimbal_fetch_data.gimbal_imu_data->output.INS_angle[INS_PITCH_ADDRESS_OFFSET] + rec_pitch;
-    }
+    // else if (mode == GIMBAL_VISION_MODE){
+    //     yaw_control   = (gimbal_fetch_data.gimbal_imu_data->output.INS_angle[INS_YAW_ADDRESS_OFFSET] + rec_yaw);
+    //     pitch_control = gimbal_fetch_data.gimbal_imu_data->output.INS_angle[INS_PITCH_ADDRESS_OFFSET] + rec_pitch;
+    // }
 
     gimbal_cmd_send.yaw_last   = gimbal_cmd_send.yaw;
     gimbal_cmd_send.pitch_last = gimbal_cmd_send.pitch;
@@ -304,10 +326,8 @@ static void Gimbal_control(int mode){
 
     delta_yaw   = (gimbal_cmd_send.yaw - gimbal_cmd_send.yaw_last)*8;
     delta_pitch = (gimbal_cmd_send.pitch - gimbal_cmd_send.pitch_last)*2.5;
-    // if (delta_yaw == 0 && delta_pitch==0){
-    //     // gimbal_keep();
-    // }
 }
+
 /**
  * @brief 视觉发送任务，将数据发送给上位机
  *
@@ -342,21 +362,15 @@ void RobotCMDTask()
     SubGetMessage(gimbal_feed_sub, &gimbal_fetch_data);
 
     
-    // 根据遥控器左侧开关,确定当前使用的控制模式为遥控器调试还是键鼠
-    if (switch_is_up(rc_data[TEMP].rc.switch_left) && (switch_is_up(rc_data[TEMP].rc.switch_right))) // 遥控器拨杆双[上],键鼠控制
-        PC_CONTROL_MODE();
-    else if (switch_is_down(rc_data[TEMP].rc.switch_left) && switch_is_down(rc_data[TEMP].rc.switch_right)) { //双[下]，急停
-        EmergencyHandler(); 
-        // memcpy(&rec_yaw, vision_recv_data, sizeof(float));
-        // memcpy(&rec_pitch, vision_recv_data + 4, sizeof(float));
-        // yaw_control   = (gimbal_fetch_data.gimbal_imu_data->output.INS_angle_deg[INS_YAW_ADDRESS_OFFSET] + rec_yaw / DEGREE_2_RAD);
-        // pitch_control = gimbal_fetch_data.gimbal_imu_data->output.INS_angle[INS_PITCH_ADDRESS_OFFSET] + rec_pitch;
-    } else {
+    //if (switch_is_up(rc_data[TEMP].rc.switch_left) && (switch_is_up(rc_data[TEMP].rc.switch_right))) // 遥控器拨杆双[上],键鼠控制
+        PC_CONTROL_MODE(); 
+    //} else {
         RC_CONTROL_MODE();
-        //shoot_cmd_send.friction_mode = FRICTION_ON;
-    }
+        if (switch_is_down(rc_data[TEMP].rc.switch_left) && switch_is_down(rc_data[TEMP].rc.switch_right)) //{ //双[下]，急停
+        EmergencyHandler();
+    //}
 
-    Gimbal_control(gimbal_cmd_send.gimbal_mode);
+    // Gimbal_control(gimbal_cmd_send.gimbal_mode);
     UpDateUI();
         
     remote_work_condition = RemoteControlIsOnline();

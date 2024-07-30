@@ -22,7 +22,9 @@ ramp_t pitch_limit_ramp = RAMP_GEN_DAFAULT;
 // int One_bullet_heat = 10; // 打一发消耗热量
 
 int Trig_time = 0; // 发射触发时间
-
+int block_pitch=0;
+int block_yaw=0;
+int out_of_limit=0;
 
 void ramp_init(ramp_t *ramp, int32_t scale)
 {
@@ -45,23 +47,6 @@ float ramp_calc(ramp_t *ramp)
 float brake_calc(float max, float brake, DJIMotorInstance * motor, float min, float cmd,int mode)
 {
     float brake_out =1;
-    //运动限位
-    if (motor->measure.total_angle > max || motor->measure.total_angle < min) {
-        if ((motor->measure.total_angle > max && cmd > 0) || (motor->measure.total_angle < min && cmd < 0)) {
-            brake_out = 0;
-        }
-    }
-    //接近限位点时减速，可以降低撞到限位时的抖动。
-    // else if (position >max - brake){
-    //     brake_out=(max-position)/brake;
-    // }
-    // else if (position <min+brake && position >min){
-    //     brake_out = (position-min) / brake;
-    // }
-    else {
-        brake_out=1;
-    }
-
     //堵转检测
     //yaw
     if (mode==0){
@@ -70,9 +55,11 @@ float brake_calc(float max, float brake, DJIMotorInstance * motor, float min, fl
     }
     else {
         motor->Block_Time=0;
+        block_pitch=0;
     }
     if (motor->Block_Time>=3){
         brake_out=0;
+        block_pitch=1;
     }
     }
     //pitch
@@ -82,12 +69,24 @@ float brake_calc(float max, float brake, DJIMotorInstance * motor, float min, fl
     }
     else {
         motor->Block_Time=0;
+        block_yaw=0;
     }
 
     if (motor->Block_Time>=3){
         brake_out=0;
+        block_yaw=1;
     }
     }
 
+    //运动限位
+    if (motor->measure.total_angle > max || motor->measure.total_angle < min) {
+        if ((motor->measure.total_angle > max && cmd > 0) || (motor->measure.total_angle < min && cmd < 0)) {
+            brake_out = 0;
+        }
+        else brake_out=1;
+    }
+    else {
+        brake_out=1;
+    }
     return brake_out;
 }

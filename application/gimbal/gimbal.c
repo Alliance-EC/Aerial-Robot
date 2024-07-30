@@ -106,7 +106,7 @@ void GimbalInit()
     Motor_Init_Config_s pitch_config = {
         .can_init_config = {
             .can_handle = &hcan1,
-            .tx_id      = 4,
+            .tx_id      = 5,
         },
         .controller_param_init_config = {
             //.current_feedforward_ptr = &(delta_pitch),

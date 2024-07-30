@@ -88,12 +88,15 @@ void ShootInit()
         },
         .controller_param_init_config = {
             .speed_PID = {
-                .Kp      = 4.5 ,//0.3
-                .Ki      = 0, //10
-                .Kd      = 0,
-                .Improve = PID_Integral_Limit,
+                .Kp      = 1.5 ,
+                .Ki      = 0, 
+                .Kd      = 0.001,
+                .Improve = PID_Integral_Limit|PID_OutputFilter,
                 .IntegralLimit = 10000,
                 .MaxOut        = 20000,
+                .Output_LPF_RC=0.001,
+                // .CoefA =1,
+                // .CoefB=100,
             },
             // .current_PID = {
             //     .Kp            = 0.9, // 2.0, // 0.7
@@ -229,7 +232,7 @@ void ShootTask()
         case LOAD_1_BULLET:                                                               // 激活能量机关/干扰对方用,英雄用.
             DJIMotorOuterLoop(loader, SPEED_LOOP);                                        // 切换到角度环
             shoot_cmd_recv.shoot_rate = 2.5;                                                  // 设定射速为1,即单发 
-            DJIMotorSetRef(loader, shoot_cmd_recv.shoot_rate * 360 * REDUCTION_RATIO_LOADER / 8); // 控制量增加一发弹丸的角度
+            DJIMotorSetRef(loader, shoot_cmd_recv.shoot_rate * 360 * REDUCTION_RATIO_LOADER / 9); // 控制量增加一发弹丸的角度
             // DJIMotorOuterLoop(loader, ANGLE_LOOP);                                        // 切换到角度环
             // DJIMotorSetRef(loader, loader->measure.total_angle + ONE_BULLET_DELTA_ANGLE); // 控制量增加一发弹丸的角度
             hibernate_time = DWT_GetTimeline_ms();                                        // 记录触发指令的时间
@@ -240,7 +243,7 @@ void ShootTask()
             ShootCtrl();
             DJIMotorOuterLoop(loader, SPEED_LOOP);
             //if (shoot_count<shoot_cmd_recv.set_shoot_count){
-            DJIMotorSetRef(loader, (shoot_cmd_recv.shoot_rate * 360 * REDUCTION_RATIO_LOADER / 8)*loader->loder_reverse);
+            DJIMotorSetRef(loader, (shoot_cmd_recv.shoot_rate * 360 * REDUCTION_RATIO_LOADER / 9)*loader->loder_reverse);
             //}
             //else {
               //  DJIMotorSetRef(loader,0);
