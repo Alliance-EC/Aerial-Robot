@@ -28,7 +28,7 @@ float delta_speed_l = 0;
 // dwt定时,计算冷却用
 static float hibernate_time = 0, dead_time = 0;
 
-bool friction_mode_last =1;
+uint8_t friction_mode_last =2;
 
 uint32_t shoot_count;      // 已发弹量
 // 热量控制算法
@@ -271,8 +271,8 @@ void ShootTask()
             ramp_init(&shoot_ramp_r, RAMP_TIME);
             shoot_count-=1;
         }
-        DJIMotorSetRef(friction_l, 43000*ramp_calc(&shoot_ramp_l)); // 42500
-        DJIMotorSetRef(friction_r, 43000*ramp_calc(&shoot_ramp_r));
+        DJIMotorSetRef(friction_l, 44000*ramp_calc(&shoot_ramp_l)); // 42500
+        DJIMotorSetRef(friction_r, 44000*ramp_calc(&shoot_ramp_r));
     } 
     else if (shoot_cmd_recv.friction_mode == FRICTION_REVERSE) {
         // DJIMotorSetRef(friction_l, -150);
@@ -284,9 +284,9 @@ void ShootTask()
             ramp_init(&shoot_ramp_r, RAMP_TIME);
 
         }
-
-        DJIMotorSetRef(friction_r, 43000 * (1 - ramp_calc(&shoot_ramp_r)));
-        DJIMotorSetRef(friction_l, 43000 * (1 - ramp_calc(&shoot_ramp_l)));
+        // else if()
+        DJIMotorSetRef(friction_r, 44000 * (1 - ramp_calc(&shoot_ramp_r)));
+        DJIMotorSetRef(friction_l, 44000 * (1 - ramp_calc(&shoot_ramp_l)));
     }
     delta_friction=friction_l->measure.speed_aps+ friction_r->measure.speed_aps;
     delta_speed_l = friction_l->measure.speed_aps -45000;

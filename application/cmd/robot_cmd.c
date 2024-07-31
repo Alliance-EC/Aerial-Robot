@@ -18,11 +18,7 @@
 #include "bsp_log.h"
 
 
-#define YAW_ANGLE_MAX 40
-#define YAW_ANGLE_MIN -60
-#define PITCH_ANGLE_MAX -11
-#define PITCH_ANGLE_MIN -32
-#define YAW_MID_ANGLE 33.5
+
 
 #if PITCH_FEED_TYPE                                                  // Pitch 电机反馈数据源为陀螺仪
 #define PTICH_HORIZON_ANGLE 0                                        // PITCH水平时电机的角度

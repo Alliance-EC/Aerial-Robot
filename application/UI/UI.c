@@ -17,7 +17,7 @@
 #include <time.h>
 
 #define PITCH_ZERO 30.368
-#define YAW_ZERO 11
+#define YAW_ZERO -34.9
 #define SQRT_2 1.4142135
 
 #define LAST 1
@@ -40,7 +40,9 @@
 #define Music_Rectangle_2         26
 #define Music_Rectangle_3         28
 #define Fly_Control_Circle          30
-#define outo_shoot                
+#define Auto_shoot                  32
+#define Limit_Line_1                34
+#define Limit_Line_2                36
 #define LENGTH 40
 static Subscriber_t *ui_sub;
 
@@ -131,6 +133,10 @@ void My_UIGraphRefresh()
         UICircleDraw(&UI[Fan_Circle_r1], "sc6", UI_Graph_ADD, 8, UI_Color_White, 10, aerial_x + 120, aerial_y, 25);
         UICircleDraw(&UI[Fan_Circle_r2], "sc7", UI_Graph_ADD, 8, UI_Color_White, 10, aerial_x + 120, aerial_y - 120, 25);
         UILineDraw(&UI[Shoot_Line], "sq0", UI_Graph_ADD, 6, UI_Color_White, 8, aerial_x + 60, aerial_y - 60, aerial_x + 60, aerial_y + 60);
+
+        //UILineDraw(&UI[Limit_Line_1], "sq1", UI_Graph_ADD, 6, UI_Color_White, 8, aerial_x + 60, aerial_y - 60, aerial_x + 60 + 120 * cos(YAW_ANGLE_MAX + PI / 2.0 - YAW_ZERO), aerial_y - 60 + 120 * sin(YAW_ANGLE_MAX + PI / 2.0 - YAW_ZERO));
+        //UILineDraw(&UI[Limit_Line_2], "sq2", UI_Graph_ADD, 6, UI_Color_White, 8, aerial_x + 60, aerial_y - 60, aerial_x + 60 + 120 * cos(YAW_ANGLE_MIN + PI / 2.0 - YAW_ZERO), aerial_y - 60 + 120 * sin(YAW_ANGLE_MIN + PI / 2.0 - YAW_ZERO));
+
         // 摩擦轮
         UICircleDraw(&UI[Shoot_Friction_Circle_l], "sc2", UI_Graph_ADD, 7, UI_Color_White, 30, shoot_fric_x, shoot_fric_y, 15);       // 摩擦轮是否开启显示
         UICircleDraw(&UI[Shoot_Friction_Circle_r], "sc3", UI_Graph_ADD, 7, UI_Color_White, 30, shoot_fric_x + 100, shoot_fric_y, 15); // 摩擦轮是否正常显示
@@ -210,7 +216,7 @@ void My_UIGraphRefresh()
         // UIGraphRefresh(&referee_info.referee_id, 7, UI[2], UI[3], UI[4], UI[5], UI[6], UI[7], UI[1]);
         // UIGraphRefresh(&referee_info.referee_id, 7, UI[0], UI[1], UI[2], UI[3], UI[4], UI[5], UI[0]);
         UIGraphRefresh(&referee_info.referee_id, 7, UI[Fan_Circle_l1], UI[Fan_Circle_l2], UI[Fan_Circle_r1], UI[Fan_Circle_r2], UI[Gimbal_Yaw_Float], UI[Gimbal_Pitch_Float], UI[Shoot_Line]);
-        UIGraphRefresh(&referee_info.referee_id, 7, UI[Shoot_Loader_Circle], UI[Mode_Rectangle], UI[Fly_Control_Circle], UI[Music_Rectangle_2], UI[Music_Rectangle_3], UI[Shoot_Friction_Circle_l], UI[Shoot_Friction_Circle_r]);
+        UIGraphRefresh(&referee_info.referee_id, 7, UI[Shoot_Loader_Circle], UI[Mode_Rectangle], UI[Fly_Control_Circle], UI[Fly_Control_Circle], UI[Fly_Control_Circle], UI[Shoot_Friction_Circle_l], UI[Shoot_Friction_Circle_r]);
         }
 
     // for (int i=1;i<=LENGTH;){
