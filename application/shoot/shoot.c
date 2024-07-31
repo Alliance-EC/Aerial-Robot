@@ -28,7 +28,7 @@ float delta_speed_l = 0;
 // dwt定时,计算冷却用
 static float hibernate_time = 0, dead_time = 0;
 
-uint8_t friction_mode_last =2;
+uint8_t friction_mode_last =1;
 
 uint32_t shoot_count;      // 已发弹量
 // 热量控制算法
