@@ -58,6 +58,7 @@ static uint8_t vision_recv_data[9];  // 从视觉上位机接收的数据-绝对
 static uint8_t vision_send_data[23]; // 给视觉上位机发送的数据-四元数
 // 这里的四元数以wxyz的顺序
 static uint8_t fly_control_data[9];
+static uint8_t pre_receive_data[9];
 
 static Publisher_t *ui_cmd_pub;            // 云台控制消息发布者
 static Ui_Ctrl_Cmd_s ui_cmd_send;      // 传递给云台的控制信息
@@ -102,28 +103,32 @@ float pitch_control; // 遥控器PITCH自由度输入值
 static void RobotReset() ;
 static void EmergencyHandler();
 //static void Shoot_control() ;
-static void Gimbal_control(int mode);
+static void Gimbal_control();
 void HOST_RECV_CALLBACK()
 {
-    //2上 1中 0下
-    for (int i=0;i<8;i++){
+    int i=0;
+    memcpy(pre_receive_data, host_instance->comm_instance, host_instance->RECV_SIZE);
+    pre_receive_data[8] = 1;
+    //memcpy(vision_recv_data, host_instance->comm_instance, host_instance->RECV_SIZE)
+    //  {AA AA -- AA AA AA AA AA }
+    //00 01 02 
+    for (;i<8;i++){
         if (i==2)continue;
-        if (host_instance->comm_instance[i]==0xAA){
+        if (pre_receive_data[i]==0xAA){
         }
         else {
-            memcpy(vision_recv_data, host_instance->comm_instance, host_instance->RECV_SIZE);
+            //判断为自瞄数据
+            memcpy(vision_recv_data, pre_receive_data, host_instance->RECV_SIZE);
             vision_recv_data[8] = 1;
             break;
         }
     }
     if (i==8){
-        memcpy(fly_control_data,host_instance->comm_instance,host_instance->RECV_SIZE);
-        fly_control_data[8]=1;
+        memcpy(fly_control_data, pre_receive_data, host_instance->RECV_SIZE);
+        fly_control_data[8] = 1;
     }
-    //memcpy(vision_recv_data, host_instance->comm_instance, host_instance->RECV_SIZE)
-    //  {AA AA -- AA AA AA AA AA }
-                //01 02 03
 }
+
 void RobotCMDInit()
 {
 
@@ -160,7 +165,7 @@ static void RC_CONTROL_MODE()
 {
     shoot_cmd_send.shoot_mode = SHOOT_ON;    // 发射机构常开
     shoot_cmd_send.shoot_rate = 23;          // 射频默认25Hz
-    gimbal_cmd_send.gimbal_mode=GIMBAL_RC_MODE;
+    //gimbal_cmd_send.gimbal_mode=GIMBAL_RC_MODE;
     if (switch_is_mid(rc_data[TEMP].rc.switch_right) && switch_is_up(rc_data[TEMP].rc.switch_left)){
         if (last_is_mid){
             if(friction_pre) pc_enable=0;
@@ -297,6 +302,7 @@ void UpDateUI()
     ui_cmd_send.load_mode    = shoot_cmd_send.load_mode;
     ui_cmd_send.gimbal_mode=gimbal_cmd_send.gimbal_mode;
     ui_cmd_send.loader_motor=shoot_fetch_data.loader_motor;
+    ui_cmd_send.fly_mode=fly_control_data[2];
 }
 
 // static void Shoot_control(int mode){
@@ -319,7 +325,7 @@ void UpDateUI()
 //         }
 //     }
 // }
-static void Gimbal_control(int mode){
+static void Gimbal_control(){
         pc_limit_yaw=brake_calc(limit_yaw_max, 20, gimbal_fetch_data.yaw_motor, limit_yaw_min, -rc_data[TEMP].mouse.x,0);
         pc_limit_pitch=brake_calc(limit_pitch_max, 5, gimbal_fetch_data.pitch_motor, limit_pitch_min, rc_data[TEMP].mouse.y,1);
         // yaw_control -= rc_data[TEMP].mouse.x / 300.0f*pc_limit_yaw;

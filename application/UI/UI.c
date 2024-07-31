@@ -39,7 +39,8 @@
 #define Music_Rectangle_1         24
 #define Music_Rectangle_2         26
 #define Music_Rectangle_3         28
-
+#define Fly_Control_Circle          30
+#define outo_shoot                
 #define LENGTH 40
 static Subscriber_t *ui_sub;
 
@@ -124,6 +125,7 @@ void My_UIGraphRefresh()
         Send_Once_Flag = 1;
         UIDelete(&referee_info.referee_id, UI_Data_Del_ALL, 0);
 
+        UICircleDraw(&UI[Fly_Control_Circle], "sc1", UI_Graph_ADD, 8, UI_Color_White, 10, aerial_x+60, aerial_y+200, 25);
         UICircleDraw(&UI[Fan_Circle_l1], "sc4", UI_Graph_ADD, 8, UI_Color_White, 10, aerial_x, aerial_y, 25);
         UICircleDraw(&UI[Fan_Circle_l2], "sc5", UI_Graph_ADD, 8, UI_Color_White, 10, aerial_x, aerial_y - 120, 25);
         UICircleDraw(&UI[Fan_Circle_r1], "sc6", UI_Graph_ADD, 8, UI_Color_White, 10, aerial_x + 120, aerial_y, 25);
@@ -171,20 +173,20 @@ void My_UIGraphRefresh()
     }
     else {
         //判断是否需要刷新，若需要刷新，修改operatre为CHANGE，待刷新完成之后再改回ADD
-        for (int i = 1; i <= LENGTH;) {
-            Is_change(&(UI[i-1]),&(UI[i]));
-            i += 2;
-        }
+        // for (int i = 1; i <= LENGTH;) {
+        //     Is_change(&(UI[i-1]),&(UI[i]));
+        //     i += 2;
+        // }
 
         //todo：满七个刷新一次，未满七个的有两种方法：一是凑2，5；二是直接1发。需要计算凑的周期以达到效率最高，发送队列中要有查重，发完之后队列出队
         //MY_High_Refresh();
         
         //pitch
-        if (ui_cmd_recv.gimbal_mode == GIMBAL_PC_MODE){
-            UIRectangleDraw(&UI[Mode_Rectangle], "rc0", UI_Graph_Change, 6, UI_Color_White, 8, mode_start_x-220, mode_start_y-45, mode_start_x-125, mode_start_y+20);
-        }
-        else if (ui_cmd_recv.gimbal_mode ==GIMBAL_VISION_MODE){
+        if (ui_cmd_recv.gimbal_mode ==GIMBAL_VISION_MODE){
             UIRectangleDraw(&UI[Mode_Rectangle], "rc0", UI_Graph_Change, 6, UI_Color_White, 8, mode_start_x-10, mode_start_y-45, mode_start_x+180, mode_start_y+20);
+        }
+        else{
+            UIRectangleDraw(&UI[Mode_Rectangle], "rc0", UI_Graph_Change, 6, UI_Color_White, 8, mode_start_x - 220, mode_start_y - 45, mode_start_x - 125, mode_start_y + 20);
         }
         UIRectangleDraw(&UI[Music_Rectangle_1], "rc1", UI_Graph_Change, 6, UI_Color_Cyan, 25, SCREEN_LENGTH - 100 * (rand()%9), SCREEN_WIDTH-240, SCREEN_LENGTH, SCREEN_WIDTH-220);
         UIRectangleDraw(&UI[Music_Rectangle_2], "rc2", UI_Graph_Change, 6, UI_Color_Cyan, 25, SCREEN_LENGTH - 70 * (rand() % 8), SCREEN_WIDTH - 290, SCREEN_LENGTH, SCREEN_WIDTH - 270);
@@ -199,7 +201,8 @@ void My_UIGraphRefresh()
         UICircleDraw(&UI[Shoot_Friction_Circle_r], "sc3", UI_Graph_Change, 7, UI_Color_White - 2 * ui_cmd_recv.friction_mode, 30, shoot_fric_x + 100, shoot_fric_y, 8); // 摩擦轮是否正常显示
 
         UICircleDraw(&UI[Shoot_Loader_Circle], "so4", UI_Graph_Change, 9, UI_Color_White - ui_cmd_recv.load_mode, 10, shoot_loader_x + 40, shoot_loader_y -16,25);
-
+        //飞机
+        UICircleDraw(&UI[Fly_Control_Circle], "sc1", UI_Graph_Change, 8, ui_cmd_recv.fly_mode, 20, aerial_x + 60, aerial_y + 200, 25);
         UICircleDraw(&UI[Fan_Circle_l1], "sc4", UI_Graph_Change, 8, UI_Color_Cyan, 10, aerial_x + 60 + 60 *cos(0.25 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), aerial_y - 60 + 60 * sin(0.25 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), 25);
         UICircleDraw(&UI[Fan_Circle_l2], "sc5", UI_Graph_Change, 8, UI_Color_Cyan, 10, aerial_x + 60 + 60 * cos(0.75 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), aerial_y - 60 + 60 * sin(0.75 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), 25);
         UICircleDraw(&UI[Fan_Circle_r1], "sc6", UI_Graph_Change, 8, UI_Color_Purplish_red, 10, aerial_x + 60 + 60 * cos(1.25 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), aerial_y - 60 + 60 * sin(1.25 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), 25);
@@ -207,13 +210,13 @@ void My_UIGraphRefresh()
         // UIGraphRefresh(&referee_info.referee_id, 7, UI[2], UI[3], UI[4], UI[5], UI[6], UI[7], UI[1]);
         // UIGraphRefresh(&referee_info.referee_id, 7, UI[0], UI[1], UI[2], UI[3], UI[4], UI[5], UI[0]);
         UIGraphRefresh(&referee_info.referee_id, 7, UI[Fan_Circle_l1], UI[Fan_Circle_l2], UI[Fan_Circle_r1], UI[Fan_Circle_r2], UI[Gimbal_Yaw_Float], UI[Gimbal_Pitch_Float], UI[Shoot_Line]);
-        UIGraphRefresh(&referee_info.referee_id, 7, UI[Shoot_Loader_Circle], UI[Mode_Rectangle], UI[Music_Rectangle_1], UI[Music_Rectangle_2], UI[Music_Rectangle_3], UI[Shoot_Friction_Circle_l], UI[Shoot_Friction_Circle_r]);
+        UIGraphRefresh(&referee_info.referee_id, 7, UI[Shoot_Loader_Circle], UI[Mode_Rectangle], UI[Fly_Control_Circle], UI[Music_Rectangle_2], UI[Music_Rectangle_3], UI[Shoot_Friction_Circle_l], UI[Shoot_Friction_Circle_r]);
         }
 
-    for (int i=1;i<=LENGTH;){
-        memcpy(&(UI[i]), &(UI[i - 1]), sizeof(Graph_Data_t));
-        i+=2;
-    }
+    // for (int i=1;i<=LENGTH;){
+    //     memcpy(&(UI[i]), &(UI[i - 1]), sizeof(Graph_Data_t));
+    //     i+=2;
+    // }
 }
 
 

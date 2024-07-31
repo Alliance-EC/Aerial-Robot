@@ -180,7 +180,7 @@ typedef struct
     friction_mode_e friction_mode;
     float yaw_limit;
     float pitch_limit;
-
+    int8_t fly_mode;
 } Ui_Ctrl_Cmd_s;
 
 // cmd发布的发射控制数据,由shoot订阅
