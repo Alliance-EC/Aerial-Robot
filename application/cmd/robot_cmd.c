@@ -57,6 +57,7 @@ HostInstance *host_instance; // 上位机接口
 static uint8_t vision_recv_data[9];  // 从视觉上位机接收的数据-绝对角度，第9个字节作为识别到目标的标志位
 static uint8_t vision_send_data[23]; // 给视觉上位机发送的数据-四元数
 // 这里的四元数以wxyz的顺序
+static uint8_t fly_control_data[9];
 
 static Publisher_t *ui_cmd_pub;            // 云台控制消息发布者
 static Ui_Ctrl_Cmd_s ui_cmd_send;      // 传递给云台的控制信息
@@ -104,9 +105,23 @@ static void EmergencyHandler();
 static void Gimbal_control(int mode);
 void HOST_RECV_CALLBACK()
 {
-    memcpy(vision_recv_data, host_instance->comm_instance, host_instance->RECV_SIZE);
-    vision_recv_data[8] = 1;
-    //  {AA AA AA AA __ AA AA AA }
+    //2上 1中 0下
+    for (int i=0;i<8;i++){
+        if (i==2)continue;
+        if (host_instance->comm_instance[i]==0xAA){
+        }
+        else {
+            memcpy(vision_recv_data, host_instance->comm_instance, host_instance->RECV_SIZE);
+            vision_recv_data[8] = 1;
+            break;
+        }
+    }
+    if (i==8){
+        memcpy(fly_control_data,host_instance->comm_instance,host_instance->RECV_SIZE);
+        fly_control_data[8]=1;
+    }
+    //memcpy(vision_recv_data, host_instance->comm_instance, host_instance->RECV_SIZE)
+    //  {AA AA -- AA AA AA AA AA }
                 //01 02 03
 }
 void RobotCMDInit()
