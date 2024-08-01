@@ -278,7 +278,7 @@ static void PC_CONTROL_MODE()
 
 static void RobotReset()
 {
-    if (rc_data[TEMP].key[KEY_PRESS].shift && rc_data[TEMP].key[KEY_PRESS].ctrl && rc_data[TEMP].key[KEY_PRESS].r) {
+    if ((rc_data[TEMP].key[KEY_PRESS].shift && rc_data[TEMP].key[KEY_PRESS].ctrl && rc_data[TEMP].key[KEY_PRESS].r)|| rc_data[TEMP].rc.dial>400) {
         osDelay(1000);
         __set_FAULTMASK(1);
         NVIC_SystemReset(); // 软件复位
