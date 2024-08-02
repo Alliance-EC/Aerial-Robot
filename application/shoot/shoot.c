@@ -285,8 +285,8 @@ void ShootTask()
 
         }
         // else if()
-        DJIMotorSetRef(friction_r, 44000 * (1 - ramp_calc(&shoot_ramp_r)));
-        DJIMotorSetRef(friction_l, 44000 * (1 - ramp_calc(&shoot_ramp_l)));
+        DJIMotorSetRef(friction_r, 44770 * (1 - ramp_calc(&shoot_ramp_r)));
+        DJIMotorSetRef(friction_l, 44770 * (1 - ramp_calc(&shoot_ramp_l)));
     }
     delta_friction=friction_l->measure.speed_aps+ friction_r->measure.speed_aps;
     delta_speed_l = friction_l->measure.speed_aps -45000;

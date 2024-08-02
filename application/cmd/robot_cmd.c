@@ -96,6 +96,8 @@ bool shoot_cmd; // 接受上位机的火控指令
 float yaw_control;   // 遥控器YAW自由度输入值
 float pitch_control; // 遥控器PITCH自由度输入值
 
+float body_angle=0;
+float yaw_control_init;
 static void RobotReset() ;
 static void EmergencyHandler();
 //static void Shoot_control() ;
@@ -278,7 +280,7 @@ static void PC_CONTROL_MODE()
 
 static void RobotReset()
 {
-    if ((rc_data[TEMP].key[KEY_PRESS].shift && rc_data[TEMP].key[KEY_PRESS].ctrl && rc_data[TEMP].key[KEY_PRESS].r)|| rc_data[TEMP].rc.dial>400) {
+    if ((rc_data[TEMP].key[KEY_PRESS].shift && rc_data[TEMP].key[KEY_PRESS].ctrl && rc_data[TEMP].key[KEY_PRESS].r)|| rc_data[TEMP].rc.dial>500 || rc_data[TEMP].rc.dial<-500) {
         osDelay(1000);
         __set_FAULTMASK(1);
         NVIC_SystemReset(); // 软件复位
@@ -322,6 +324,8 @@ void UpDateUI()
 //     }
 // }
 static void Gimbal_control(){
+        //limit_yaw_max=YAW_ANGLE_MAX-body_angle;
+        //limit_yaw_min=YAW_ANGLE_MIN-body_angle;
         pc_limit_yaw=brake_calc(limit_yaw_max, 20, gimbal_fetch_data.yaw_motor, limit_yaw_min, -rc_data[TEMP].mouse.x,0);
         pc_limit_pitch=brake_calc(limit_pitch_max, 5, gimbal_fetch_data.pitch_motor, limit_pitch_min, rc_data[TEMP].mouse.y,1);
         // yaw_control -= rc_data[TEMP].mouse.x / 300.0f*pc_limit_yaw;
@@ -369,7 +373,7 @@ void VisionTask()
 }
 
 
-
+int test_ecd=0;
 /* 机器人核心控制任务,200Hz频率运行(必须高于视觉发送频率) */
 void RobotCMDTask()
 {
@@ -381,8 +385,11 @@ void RobotCMDTask()
 #endif // GIMBAL_BOARD
     SubGetMessage(shoot_feed_sub, &shoot_fetch_data);
     SubGetMessage(gimbal_feed_sub, &gimbal_fetch_data);
+    body_angle=-gimbal_fetch_data.gimbal_imu_data->output.Yaw_total_angle_deg+gimbal_fetch_data.yaw_motor->measure.total_angle+yaw_control_init;
+    test_ecd=gimbal_fetch_data.yaw_motor->measure.total_angle-YAW_MID_ANGLE;
     if (flag_once&&init_angle!=0){
         yaw_control = YAW_MID_ANGLE - init_angle;
+        yaw_control_init=YAW_MID_ANGLE - init_angle;
         flag_once   = 0;
     }
         if (switch_is_down(rc_data[TEMP].rc.switch_left) && switch_is_down(rc_data[TEMP].rc.switch_right)) //{ //双[下]，急停
@@ -395,7 +402,6 @@ void RobotCMDTask()
 
     // Gimbal_control(gimbal_cmd_send.gimbal_mode);
     UpDateUI();
-        
     remote_work_condition = RemoteControlIsOnline();
 
     if (remote_work_condition == 0) {
@@ -418,7 +424,6 @@ void RobotCMDTask()
     PubPushMessage(ui_cmd_pub, (void *)&ui_cmd_send);
     VisionTask();
     }
-
 /**
  * @brief  紧急停止,包括遥控器左上侧拨轮打满/重要模块离线/双板通信失效等
  *

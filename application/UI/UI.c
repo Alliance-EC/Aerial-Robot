@@ -128,15 +128,16 @@ void My_UIGraphRefresh()
         UIDelete(&referee_info.referee_id, UI_Data_Del_ALL, 0);
 
         UICircleDraw(&UI[Fly_Control_Circle], "sc1", UI_Graph_ADD, 8, UI_Color_White, 10, aerial_x+60, aerial_y+200, 25);
-        UICircleDraw(&UI[Fan_Circle_l1], "sc4", UI_Graph_ADD, 8, UI_Color_White, 10, aerial_x, aerial_y, 25);
-        UICircleDraw(&UI[Fan_Circle_l2], "sc5", UI_Graph_ADD, 8, UI_Color_White, 10, aerial_x, aerial_y - 120, 25);
-        UICircleDraw(&UI[Fan_Circle_r1], "sc6", UI_Graph_ADD, 8, UI_Color_White, 10, aerial_x + 120, aerial_y, 25);
-        UICircleDraw(&UI[Fan_Circle_r2], "sc7", UI_Graph_ADD, 8, UI_Color_White, 10, aerial_x + 120, aerial_y - 120, 25);
+        UICircleDraw(&UI[Fan_Circle_l1], "sc4", UI_Graph_ADD, 8, UI_Color_White, 5, aerial_x, aerial_y, 32);
+        UICircleDraw(&UI[Fan_Circle_l2], "sc5", UI_Graph_ADD, 8, UI_Color_White, 5, aerial_x, aerial_y - 120, 32);
+        UICircleDraw(&UI[Fan_Circle_r1], "sc6", UI_Graph_ADD, 8, UI_Color_White, 5, aerial_x + 120, aerial_y, 32);
+        UICircleDraw(&UI[Fan_Circle_r2], "sc7", UI_Graph_ADD, 8, UI_Color_White, 5, aerial_x + 120, aerial_y - 120, 32);
         UILineDraw(&UI[Shoot_Line], "sq0", UI_Graph_ADD, 6, UI_Color_White, 8, aerial_x + 60, aerial_y - 60, aerial_x + 60, aerial_y + 60);
 
-        //UILineDraw(&UI[Limit_Line_1], "sq1", UI_Graph_ADD, 6, UI_Color_White, 8, aerial_x + 60, aerial_y - 60, aerial_x + 60 + 120 * cos(YAW_ANGLE_MAX + PI / 2.0 - YAW_ZERO), aerial_y - 60 + 120 * sin(YAW_ANGLE_MAX + PI / 2.0 - YAW_ZERO));
+       // UILineDraw(&UI[Limit_Line_1], "sq1", UI_Graph_ADD, 6, UI_Color_White, 8, aerial_x + 60, aerial_y - 60, aerial_x + 60 + 120 * cos(YAW_ANGLE_MAX + PI / 2.0 - YAW_ZERO), aerial_y - 60 + 120 * sin(YAW_ANGLE_MAX + PI / 2.0 - YAW_ZERO));
         //UILineDraw(&UI[Limit_Line_2], "sq2", UI_Graph_ADD, 6, UI_Color_White, 8, aerial_x + 60, aerial_y - 60, aerial_x + 60 + 120 * cos(YAW_ANGLE_MIN + PI / 2.0 - YAW_ZERO), aerial_y - 60 + 120 * sin(YAW_ANGLE_MIN + PI / 2.0 - YAW_ZERO));
-
+        UILineDraw(&UI[Limit_Line_1], "sq1", UI_Graph_ADD, 9, UI_Color_Pink, 4, aerial_x + 60, aerial_y - 60, aerial_x + 60 + 120 * cos(0.5 * PI +(YAW_MID_ANGLE-YAW_ANGLE_MAX)/360.0*2*PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), aerial_y - 60 + 120 * sin(0.5 * PI+(YAW_MID_ANGLE-YAW_ANGLE_MAX)/360.0*2*PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI));
+        UILineDraw(&UI[Limit_Line_2], "sq2", UI_Graph_ADD, 9, UI_Color_Pink, 4, aerial_x + 60, aerial_y - 60, aerial_x + 60 + 120 * cos(0.5 * PI +(YAW_MID_ANGLE-YAW_ANGLE_MIN)/360.0*2*PI+ (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), aerial_y - 60 + 120 * sin(0.5 * PI + (YAW_MID_ANGLE-YAW_ANGLE_MIN)/360.0*2*PI+(ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI));
         // 摩擦轮
         UICircleDraw(&UI[Shoot_Friction_Circle_l], "sc2", UI_Graph_ADD, 7, UI_Color_White, 30, shoot_fric_x, shoot_fric_y, 15);       // 摩擦轮是否开启显示
         UICircleDraw(&UI[Shoot_Friction_Circle_r], "sc3", UI_Graph_ADD, 7, UI_Color_White, 30, shoot_fric_x + 100, shoot_fric_y, 15); // 摩擦轮是否正常显示
@@ -203,20 +204,22 @@ void My_UIGraphRefresh()
         UIFloatDraw(&UI[Gimbal_Yaw_Float], "sm2", UI_Graph_Change, 7, UI_Color_Purplish_red + 4 * ui_cmd_recv.yaw_limit, 30, 5, 3, Gimbal_start_x + 390, Gimbal_start_y + 100, (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) * 1000);
 
         //摩擦轮
-        UICircleDraw(&UI[Shoot_Friction_Circle_l], "sc2", UI_Graph_Change, 7, UI_Color_White - 2 * ui_cmd_recv.friction_mode, 30, shoot_fric_x, shoot_fric_y, 8); // 摩擦轮是否开启显示
-        UICircleDraw(&UI[Shoot_Friction_Circle_r], "sc3", UI_Graph_Change, 7, UI_Color_White - 2 * ui_cmd_recv.friction_mode, 30, shoot_fric_x + 100, shoot_fric_y, 8); // 摩擦轮是否正常显示
+        UICircleDraw(&UI[Shoot_Friction_Circle_l], "sc2", UI_Graph_Change, 7, UI_Color_White - 2 * ui_cmd_recv.friction_mode, 30, shoot_fric_x, shoot_fric_y, 15); // 摩擦轮是否开启显示
+        UICircleDraw(&UI[Shoot_Friction_Circle_r], "sc3", UI_Graph_Change, 7, UI_Color_White - 2 * ui_cmd_recv.friction_mode, 30, shoot_fric_x + 100, shoot_fric_y, 15); // 摩擦轮是否正常显示
 
         UICircleDraw(&UI[Shoot_Loader_Circle], "so4", UI_Graph_Change, 9, UI_Color_White - ui_cmd_recv.load_mode, 10, shoot_loader_x + 40, shoot_loader_y -16,25);
         //飞机
         UICircleDraw(&UI[Fly_Control_Circle], "sc1", UI_Graph_Change, 8, ui_cmd_recv.fly_mode, 20, aerial_x + 60, aerial_y + 200, 25);
-        UICircleDraw(&UI[Fan_Circle_l1], "sc4", UI_Graph_Change, 8, UI_Color_Cyan, 10, aerial_x + 60 + 60 *cos(0.25 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), aerial_y - 60 + 60 * sin(0.25 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), 25);
-        UICircleDraw(&UI[Fan_Circle_l2], "sc5", UI_Graph_Change, 8, UI_Color_Cyan, 10, aerial_x + 60 + 60 * cos(0.75 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), aerial_y - 60 + 60 * sin(0.75 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), 25);
-        UICircleDraw(&UI[Fan_Circle_r1], "sc6", UI_Graph_Change, 8, UI_Color_Purplish_red, 10, aerial_x + 60 + 60 * cos(1.25 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), aerial_y - 60 + 60 * sin(1.25 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), 25);
-        UICircleDraw(&UI[Fan_Circle_r2], "sc7", UI_Graph_Change, 8, UI_Color_Purplish_red, 10, aerial_x + 60 + 60 * cos(1.75 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), aerial_y - 60 + 60 * sin(1.75 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), 25);
+        UICircleDraw(&UI[Fan_Circle_l1], "sc4", UI_Graph_Change, 8, UI_Color_Cyan, 5, aerial_x + 60 + 60 *cos(0.25 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), aerial_y - 60 + 60 * sin(0.25 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), 32);
+        UICircleDraw(&UI[Fan_Circle_l2], "sc5", UI_Graph_Change, 8, UI_Color_Cyan, 5, aerial_x + 60 + 60 * cos(0.75 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), aerial_y - 60 + 60 * sin(0.75 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), 32);
+        UICircleDraw(&UI[Fan_Circle_r1], "sc6", UI_Graph_Change, 8, UI_Color_Purplish_red, 5, aerial_x + 60 + 60 * cos(1.25 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), aerial_y - 60 + 60 * sin(1.25 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), 32);
+        UICircleDraw(&UI[Fan_Circle_r2], "sc7", UI_Graph_Change, 8, UI_Color_Purplish_red, 5, aerial_x + 60 + 60 * cos(1.75 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), aerial_y - 60 + 60 * sin(1.75 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), 32);
+        UILineDraw(&UI[Limit_Line_1], "sq1", UI_Graph_Change, 9, UI_Color_Pink, 4, aerial_x + 60, aerial_y - 60, aerial_x + 60 + 120 * cos(0.5 * PI +(YAW_MID_ANGLE-YAW_ANGLE_MAX)/360.0*2*PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), aerial_y - 60 + 120 * sin(0.5 * PI+(YAW_MID_ANGLE-YAW_ANGLE_MAX)/360.0*2*PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI));
+        UILineDraw(&UI[Limit_Line_2], "sq2", UI_Graph_Change, 9, UI_Color_Pink, 4, aerial_x + 60, aerial_y - 60, aerial_x + 60 + 120 * cos(0.5 * PI +(YAW_MID_ANGLE-YAW_ANGLE_MIN)/360.0*2*PI+ (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), aerial_y - 60 + 120 * sin(0.5 * PI + (YAW_MID_ANGLE-YAW_ANGLE_MIN)/360.0*2*PI+(ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI));
         // UIGraphRefresh(&referee_info.referee_id, 7, UI[2], UI[3], UI[4], UI[5], UI[6], UI[7], UI[1]);
         // UIGraphRefresh(&referee_info.referee_id, 7, UI[0], UI[1], UI[2], UI[3], UI[4], UI[5], UI[0]);
         UIGraphRefresh(&referee_info.referee_id, 7, UI[Fan_Circle_l1], UI[Fan_Circle_l2], UI[Fan_Circle_r1], UI[Fan_Circle_r2], UI[Gimbal_Yaw_Float], UI[Gimbal_Pitch_Float], UI[Shoot_Line]);
-        UIGraphRefresh(&referee_info.referee_id, 7, UI[Shoot_Loader_Circle], UI[Mode_Rectangle], UI[Fly_Control_Circle], UI[Fly_Control_Circle], UI[Fly_Control_Circle], UI[Shoot_Friction_Circle_l], UI[Shoot_Friction_Circle_r]);
+        UIGraphRefresh(&referee_info.referee_id, 7, UI[Shoot_Loader_Circle], UI[Mode_Rectangle], UI[Fly_Control_Circle], UI[Limit_Line_1], UI[Limit_Line_2], UI[Shoot_Friction_Circle_l], UI[Shoot_Friction_Circle_r]);
         }
 
     // for (int i=1;i<=LENGTH;){
