@@ -28,8 +28,8 @@ float delta_speed_l = 0;
 // dwt定时,计算冷却用
 static float hibernate_time = 0, dead_time = 0;
 
-uint8_t friction_mode_last =1;
-
+uint8_t friction_mode_last =0;
+int init=0;
 uint32_t shoot_count;      // 已发弹量
 // 热量控制算法
 void Shoot_Fric_data_process()
@@ -81,6 +81,8 @@ void Shoot_Fric_data_process()
 
 void ShootInit()
 {
+    ramp_un_init(&shoot_ramp_l, RAMP_TIME);
+    ramp_un_init(&shoot_ramp_r, RAMP_TIME);
     // 左摩擦轮
     Motor_Init_Config_s friction_config = {
         .can_init_config = {
@@ -273,28 +275,26 @@ void ShootTask()
         }
         DJIMotorSetRef(friction_l, 44000*ramp_calc(&shoot_ramp_l)); // 42500
         DJIMotorSetRef(friction_r, 44000*ramp_calc(&shoot_ramp_r));
-    } 
+    }
     else if (shoot_cmd_recv.friction_mode == FRICTION_REVERSE) {
-        // DJIMotorSetRef(friction_l, -150);
-        // DJIMotorSetRef(friction_r, 150);
-    } else if (shoot_cmd_recv.friction_mode == FRICTION_OFF) // 关闭摩擦轮
+    } 
+    else if (shoot_cmd_recv.friction_mode == FRICTION_OFF) // 关闭摩擦轮
     {
-        if (friction_mode_last == FRICTION_ON) {
+         if (friction_mode_last == FRICTION_ON) {
             ramp_init(&shoot_ramp_l, RAMP_TIME);
             ramp_init(&shoot_ramp_r, RAMP_TIME);
-
         }
-        // else if()
-        DJIMotorSetRef(friction_r, 44770 * (1 - ramp_calc(&shoot_ramp_r)));
-        DJIMotorSetRef(friction_l, 44770 * (1 - ramp_calc(&shoot_ramp_l)));
+        DJIMotorSetRef(friction_r, 44000 * (1 - ramp_calc(&shoot_ramp_r)));
+        DJIMotorSetRef(friction_l, 44000 * (1 - ramp_calc(&shoot_ramp_l)));
     }
+
     delta_friction=friction_l->measure.speed_aps+ friction_r->measure.speed_aps;
     delta_speed_l = friction_l->measure.speed_aps -45000;
     delta_speed_r = friction_r->measure.speed_aps +45000;
     friction_mode_last = shoot_cmd_recv.friction_mode;
 
     Shoot_Fric_data_process();
-        // 反馈数据,目前暂时没有要设定的反馈数据,后续可能增加应用离线监测以及卡弹反馈
-        shoot_feedback_data.loader_motor = loader;
+    // 反馈数据,目前暂时没有要设定的反馈数据,后续可能增加应用离线监测以及卡弹反馈
+    shoot_feedback_data.loader_motor = loader;
     PubPushMessage(shoot_pub, (void *)&shoot_feedback_data);
 }

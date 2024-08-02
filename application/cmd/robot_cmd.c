@@ -271,16 +271,15 @@ static void PC_CONTROL_MODE()
         //Shoot_control(gimbal_cmd_send.gimbal_mode);
         RobotReset(); // 机器人复位处理
     }
-    
-/**
- * @brief 机器人复位函数，按下Ctrl+Shift+r
- *
- *
- */
 
 static void RobotReset()
 {
-    if ((rc_data[TEMP].key[KEY_PRESS].shift && rc_data[TEMP].key[KEY_PRESS].ctrl && rc_data[TEMP].key[KEY_PRESS].r)|| rc_data[TEMP].rc.dial>500 || rc_data[TEMP].rc.dial<-500) {
+    if ((rc_data[TEMP].key[KEY_PRESS].shift && rc_data[TEMP].key[KEY_PRESS].ctrl && rc_data[TEMP].key[KEY_PRESS].r)) {
+        osDelay(1000);
+        __set_FAULTMASK(1);
+        NVIC_SystemReset(); // 软件复位
+    }
+    if (rc_data[TEMP].rc.dial>500 || rc_data[TEMP].rc.dial<-500){
         osDelay(1000);
         __set_FAULTMASK(1);
         NVIC_SystemReset(); // 软件复位
@@ -398,8 +397,6 @@ void RobotCMDTask()
             PC_CONTROL_MODE();
             RC_CONTROL_MODE();
         }
-    //}
-
     // Gimbal_control(gimbal_cmd_send.gimbal_mode);
     UpDateUI();
     remote_work_condition = RemoteControlIsOnline();

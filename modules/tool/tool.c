@@ -32,6 +32,12 @@ void ramp_init(ramp_t *ramp, int32_t scale)
     ramp->scale = scale;
 }
 
+void ramp_un_init(ramp_t *ramp, int32_t scale)
+{
+    ramp->count = scale;
+    ramp->scale = scale;
+}
+
 float ramp_calc(ramp_t *ramp)
 {
     if (ramp->scale <= 0)
