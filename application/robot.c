@@ -42,6 +42,9 @@ void RobotInit()
     BSPInit();
     buzzer_one_note(Do_freq, 0.1f);
 #if defined(ONE_BOARD) || defined(GIMBAL_BOARD)
+    HAL_GPIO_WritePin(GPIOH,GPIO_PIN_10,1);
+    HAL_GPIO_WritePin(GPIOH,GPIO_PIN_11,1);
+    HAL_GPIO_WritePin(GPIOH,GPIO_PIN_12,1);
     RobotCMDInit();
     buzzer_one_note(Re_freq, 0.1f);
     GimbalInit();

@@ -71,6 +71,7 @@ typedef enum {
     ID_event_data                = 0x0101, // 场地事件数据
     ID_supply_projectile_action  = 0x0102, // 场地补给站动作标识数据
     ID_supply_projectile_booking = 0x0103, // 场地补给站预约子弹数据
+    ID_Receive_Dart              = 0x0105,
     ID_game_robot_state          = 0x0201, // 机器人状态数据
     ID_power_heat_data           = 0x0202, // 实时功率热量数据
     ID_game_robot_pos            = 0x0203, // 机器人位置数据
@@ -85,14 +86,15 @@ typedef enum {
 typedef enum {
     LEN_game_state               = 3,                        // 0x0001
     LEN_game_result              = 1,                        // 0x0002
-    LEN_game_robot_HP            = 2,                        // 0x0003
+    LEN_game_robot_HP            = 32,                        // 0x0003
     LEN_event_data               = 4,                        // 0x0101
     LEN_supply_projectile_action = 4,                        // 0x0102
+    LEN_Receive_Dart             = 3,                        // 0x0105
     LEN_game_robot_state         = 13,                       // 0x0201
     LEN_power_heat_data          = 16,                       // 0x0202
     LEN_game_robot_pos           = 16,                       // 0x0203	
     LEN_buff_musk                = 6,                        // 0x0204
-    LEN_aerial_robot_energy      = 1,                        // 0x0205
+    LEN_aerial_robot_energy      = 2,                        // 0x0205
     LEN_robot_hurt               = 1,                        // 0x0206
     LEN_shoot_data               = 7,                        // 0x0207
     LEN_receive_data             = 6 + Communicate_Data_LEN, // 0x0301
@@ -157,6 +159,12 @@ typedef struct
     uint8_t supply_projectile_step;
     uint8_t supply_projectile_num;
 } ext_supply_projectile_action_t;
+
+typedef struct 
+{ 
+  uint8_t dart_remaining_time; 
+  uint16_t dart_info; 
+}dart_info_t; 
 
 /* ID: 0X0201  Byte: 27    机器人状态数据 */
 typedef struct

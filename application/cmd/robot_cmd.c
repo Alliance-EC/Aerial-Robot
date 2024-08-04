@@ -76,6 +76,7 @@ static Robot_Status_e robot_state; // 机器人整体工作状态
 Referee_Interactive_info_t Referee_Interactive_info;    // 发送给UI绘制的数据
 auto_shoot_mode_e AutoShooting_flag = AutoShooting_Off; // 自动射击标志位
 extern char Send_Once_Flag;                             // 初始化UI标志
+extern char delete_warnning;
 extern float init_angle;
 
 float limit_yaw_max = YAW_ANGLE_MAX, limit_yaw_min = YAW_ANGLE_MIN;
@@ -267,6 +268,9 @@ static void PC_CONTROL_MODE()
         if (rc_data[TEMP].key[KEY_PRESS].r) {
             Send_Once_Flag = 0; // UI重新发送
         }
+        if (rc_data[TEMP].key[KEY_PRESS].x) {
+            delete_warnning = 1; // UI重新发送
+        }
 
         //Shoot_control(gimbal_cmd_send.gimbal_mode);
         RobotReset(); // 机器人复位处理
@@ -289,6 +293,7 @@ static void RobotReset()
 /**
  * @brief 更新UI数据
  */
+
 void UpDateUI()
 {
     ui_cmd_send.yaw_motor=gimbal_fetch_data.yaw_motor;
@@ -299,7 +304,8 @@ void UpDateUI()
     ui_cmd_send.load_mode    = shoot_cmd_send.load_mode;
     ui_cmd_send.gimbal_mode=gimbal_cmd_send.gimbal_mode;
     ui_cmd_send.loader_motor=shoot_fetch_data.loader_motor;
-    ui_cmd_send.fly_mode=fly_control_data[2];
+    if (fly_control_data[2]==0){ui_cmd_send.fly_mode=4;}
+    else {ui_cmd_send.fly_mode=fly_control_data[2];}
 }
 
 // static void Shoot_control(int mode){

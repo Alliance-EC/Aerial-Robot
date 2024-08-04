@@ -66,6 +66,9 @@ static void JudgeReadData(uint8_t *buff)
 				case ID_game_robot_survivors: // 0x0003
 					memcpy(&referee_info.GameRobotHP, (buff + DATA_Offset), LEN_game_robot_HP);
 					break;
+				case ID_Receive_Dart:
+					memcpy(&referee_info.GameDartTime, (buff + DATA_Offset), LEN_Receive_Dart);
+					break;
 				case ID_event_data: // 0x0101
 					memcpy(&referee_info.EventData, (buff + DATA_Offset), LEN_event_data);
 					break;

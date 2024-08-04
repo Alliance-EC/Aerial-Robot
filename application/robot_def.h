@@ -181,6 +181,7 @@ typedef struct
     float yaw_limit;
     float pitch_limit;
     int8_t fly_mode;
+    int8_t delete_warnning;
 } Ui_Ctrl_Cmd_s;
 
 // cmd发布的发射控制数据,由shoot订阅

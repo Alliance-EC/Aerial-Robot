@@ -43,6 +43,7 @@
 #define Auto_shoot                  32
 #define Limit_Line_1                34
 #define Limit_Line_2                36
+#define DART_Remind_String          38
 #define LENGTH 40
 static Subscriber_t *ui_sub;
 
@@ -77,7 +78,7 @@ static uint16_t aerial_x;
 static uint16_t aerial_y;
 static uint16_t mode_start_x;
 static uint16_t mode_start_y;
-
+uint16_t target_outpost;
 /**
  * @brief  判断各种ID，选择客户端ID
  * @param  referee_info_t *referee_info
@@ -91,10 +92,12 @@ static void DeterminRobotID()
     referee_info.referee_id.Cilent_ID         = 0x0100 + referee_info.GameRobotState.robot_id; // 计算客户端ID
     referee_info.referee_id.Robot_ID          = referee_info.GameRobotState.robot_id;          // 计算机器人ID
     referee_info.referee_id.Receiver_Robot_ID = 0;
+    if (referee_info.GameRobotState.robot_id>7){target_outpost=referee_info.GameRobotHP.red_outpost_HP;}
+    else {target_outpost=referee_info.GameRobotHP.blue_outpost_HP;}
 }
 
 char Send_Once_Flag = 0; // 初始化标志
-
+char delete_warnning =0;
 
 void ui_init(){
     ui_sub = SubRegister("ui_cmd", sizeof(Ui_Ctrl_Cmd_s));
@@ -127,7 +130,7 @@ void My_UIGraphRefresh()
         Send_Once_Flag = 1;
         UIDelete(&referee_info.referee_id, UI_Data_Del_ALL, 0);
 
-        UICircleDraw(&UI[Fly_Control_Circle], "sc1", UI_Graph_ADD, 8, UI_Color_White, 10, aerial_x+60, aerial_y+200, 25);
+        UICircleDraw(&UI[Fly_Control_Circle], "sc1", UI_Graph_ADD, 8, UI_Color_White, 20, aerial_x+30, aerial_y+200, 55);
         UICircleDraw(&UI[Fan_Circle_l1], "sc4", UI_Graph_ADD, 8, UI_Color_White, 5, aerial_x, aerial_y, 32);
         UICircleDraw(&UI[Fan_Circle_l2], "sc5", UI_Graph_ADD, 8, UI_Color_White, 5, aerial_x, aerial_y - 120, 32);
         UICircleDraw(&UI[Fan_Circle_r1], "sc6", UI_Graph_ADD, 8, UI_Color_White, 5, aerial_x + 120, aerial_y, 32);
@@ -142,19 +145,28 @@ void My_UIGraphRefresh()
         UICircleDraw(&UI[Shoot_Friction_Circle_l], "sc2", UI_Graph_ADD, 7, UI_Color_White, 30, shoot_fric_x, shoot_fric_y, 15);       // 摩擦轮是否开启显示
         UICircleDraw(&UI[Shoot_Friction_Circle_r], "sc3", UI_Graph_ADD, 7, UI_Color_White, 30, shoot_fric_x + 100, shoot_fric_y, 15); // 摩擦轮是否正常显示
 
-        sprintf(UI_State_sta[1].show_Data, "PC");
-        UICharDraw(&UI_State_sta[1], "ss1", UI_Graph_ADD, 7, UI_Color_Cyan, 30, 4, mode_start_x - 200, mode_start_y, "PC");
-        UICharRefresh(&referee_info.referee_id, UI_State_sta[1]);
+        // sprintf(UI_State_sta[1].show_Data, "PC");
+        // UICharDraw(&UI_State_sta[1], "ss1", UI_Graph_ADD, 7, UI_Color_Cyan, 30, 4, mode_start_x - 200, mode_start_y, "PC");
+        // UICharRefresh(&referee_info.referee_id, UI_State_sta[1]);
 
-        sprintf(UI_State_sta[0].show_Data, "Vision");
-        UICharDraw(&UI_State_sta[0], "ss0", UI_Graph_ADD, 7, UI_Color_Cyan, 30, 4, mode_start_x, mode_start_y, "Vision");
-        UICharRefresh(&referee_info.referee_id, UI_State_sta[0]);
+        // sprintf(UI_State_sta[0].show_Data, "Vision");
+        // UICharDraw(&UI_State_sta[0], "ss0", UI_Graph_ADD, 7, UI_Color_Cyan, 30, 4, mode_start_x, mode_start_y, "Vision");
+        // UICharRefresh(&referee_info.referee_id, UI_State_sta[0]);
         
         sprintf(UI_State_sta[2].show_Data, "Loader");
         UICharDraw(&UI_State_sta[2], "ss2", UI_Graph_ADD, 7, UI_Color_Cyan, 30, 4, shoot_loader_x - 200, shoot_loader_y, "Loader");
         UICharRefresh(&referee_info.referee_id, UI_State_sta[2]);
 
-        UIRectangleDraw(&UI[Mode_Rectangle], "rc0", UI_Graph_ADD, 6, UI_Color_White, 8, mode_start_x, mode_start_y, mode_start_x, mode_start_y);
+        if(referee_info.AerialRobotEnergy.airforce_status!=0 && target_outpost==0){
+        sprintf(UI_State_sta[6].show_Data, "shoot dart");
+        UICharDraw(&UI_State_sta[6], "ss6", UI_Graph_ADD, 4, UI_Color_Orange, 80, 10, mode_start_x-380, mode_start_y, "shoot dart");
+        UICharRefresh(&referee_info.referee_id, UI_State_sta[6]);
+
+        sprintf(UI_State_sta[7].show_Data, "open door");
+        UICharDraw(&UI_State_sta[7], "ss7", UI_Graph_ADD, 4, UI_Color_Orange, 80, 10, mode_start_x-330, mode_start_y+100, "open door");
+        UICharRefresh(&referee_info.referee_id, UI_State_sta[7]);}
+
+        //UIRectangleDraw(&UI[Mode_Rectangle], "rc0", UI_Graph_ADD, 6, UI_Color_White, 8, mode_start_x, mode_start_y, mode_start_x, mode_start_y);
         UIRectangleDraw(&UI[Music_Rectangle_1], "rc1", UI_Graph_ADD, 6, UI_Color_White, 8, mode_start_x, mode_start_y, mode_start_x, mode_start_y);
         UIRectangleDraw(&UI[Music_Rectangle_2], "rc2", UI_Graph_ADD, 6, UI_Color_White, 8, mode_start_x, mode_start_y, mode_start_x, mode_start_y);
         UIRectangleDraw(&UI[Music_Rectangle_3], "rc3", UI_Graph_ADD, 6, UI_Color_White, 8, mode_start_x, mode_start_y, mode_start_x, mode_start_y);
@@ -189,12 +201,12 @@ void My_UIGraphRefresh()
         //MY_High_Refresh();
         
         //pitch
-        if (ui_cmd_recv.gimbal_mode ==GIMBAL_VISION_MODE){
-            UIRectangleDraw(&UI[Mode_Rectangle], "rc0", UI_Graph_Change, 6, UI_Color_White, 8, mode_start_x-10, mode_start_y-45, mode_start_x+180, mode_start_y+20);
-        }
-        else{
-            UIRectangleDraw(&UI[Mode_Rectangle], "rc0", UI_Graph_Change, 6, UI_Color_White, 8, mode_start_x - 220, mode_start_y - 45, mode_start_x - 125, mode_start_y + 20);
-        }
+        // if (ui_cmd_recv.gimbal_mode ==GIMBAL_VISION_MODE){
+        //     UIRectangleDraw(&UI[Mode_Rectangle], "rc0", UI_Graph_Change, 6, UI_Color_White, 8, mode_start_x-10, mode_start_y-45, mode_start_x+180, mode_start_y+20);
+        // }
+        // else{
+        //     UIRectangleDraw(&UI[Mode_Rectangle], "rc0", UI_Graph_Change, 6, UI_Color_White, 8, mode_start_x - 220, mode_start_y - 45, mode_start_x - 125, mode_start_y + 20);
+        // }
         UIRectangleDraw(&UI[Music_Rectangle_1], "rc1", UI_Graph_Change, 6, UI_Color_Cyan, 25, SCREEN_LENGTH - 100 * (rand()%9), SCREEN_WIDTH-240, SCREEN_LENGTH, SCREEN_WIDTH-220);
         UIRectangleDraw(&UI[Music_Rectangle_2], "rc2", UI_Graph_Change, 6, UI_Color_Cyan, 25, SCREEN_LENGTH - 70 * (rand() % 8), SCREEN_WIDTH - 290, SCREEN_LENGTH, SCREEN_WIDTH - 270);
         UIRectangleDraw(&UI[Music_Rectangle_3], "rc3", UI_Graph_Change, 6, UI_Color_Cyan, 25, SCREEN_LENGTH - 50 * (rand() % 10), SCREEN_WIDTH - 340, SCREEN_LENGTH, SCREEN_WIDTH - 320);
@@ -209,7 +221,7 @@ void My_UIGraphRefresh()
 
         UICircleDraw(&UI[Shoot_Loader_Circle], "so4", UI_Graph_Change, 9, UI_Color_White - ui_cmd_recv.load_mode, 10, shoot_loader_x + 40, shoot_loader_y -16,25);
         //飞机
-        UICircleDraw(&UI[Fly_Control_Circle], "sc1", UI_Graph_Change, 8, ui_cmd_recv.fly_mode, 20, aerial_x + 60, aerial_y + 200, 25);
+        UICircleDraw(&UI[Fly_Control_Circle], "sc1", UI_Graph_Change, 8, ui_cmd_recv.fly_mode, 20, aerial_x + 30, aerial_y + 200, 55);
         UICircleDraw(&UI[Fan_Circle_l1], "sc4", UI_Graph_Change, 8, UI_Color_Cyan, 5, aerial_x + 60 + 60 *cos(0.25 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), aerial_y - 60 + 60 * sin(0.25 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), 32);
         UICircleDraw(&UI[Fan_Circle_l2], "sc5", UI_Graph_Change, 8, UI_Color_Cyan, 5, aerial_x + 60 + 60 * cos(0.75 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), aerial_y - 60 + 60 * sin(0.75 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), 32);
         UICircleDraw(&UI[Fan_Circle_r1], "sc6", UI_Graph_Change, 8, UI_Color_Purplish_red, 5, aerial_x + 60 + 60 * cos(1.25 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), aerial_y - 60 + 60 * sin(1.25 * PI + (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), 32);
@@ -218,14 +230,21 @@ void My_UIGraphRefresh()
         UILineDraw(&UI[Limit_Line_2], "sq2", UI_Graph_Change, 9, UI_Color_Pink, 4, aerial_x + 60, aerial_y - 60, aerial_x + 60 + 120 * cos(0.5 * PI +(YAW_MID_ANGLE-YAW_ANGLE_MIN)/360.0*2*PI+ (ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI), aerial_y - 60 + 120 * sin(0.5 * PI + (YAW_MID_ANGLE-YAW_ANGLE_MIN)/360.0*2*PI+(ui_cmd_recv.yaw_motor->measure.total_angle + YAW_ZERO) / 360.0 * 2 * PI));
         // UIGraphRefresh(&referee_info.referee_id, 7, UI[2], UI[3], UI[4], UI[5], UI[6], UI[7], UI[1]);
         // UIGraphRefresh(&referee_info.referee_id, 7, UI[0], UI[1], UI[2], UI[3], UI[4], UI[5], UI[0]);
-        UIGraphRefresh(&referee_info.referee_id, 7, UI[Fan_Circle_l1], UI[Fan_Circle_l2], UI[Fan_Circle_r1], UI[Fan_Circle_r2], UI[Gimbal_Yaw_Float], UI[Gimbal_Pitch_Float], UI[Shoot_Line]);
+        UIGraphRefresh(&referee_info.referee_id, 7, UI[Fan_Circle_l1], UI[Fan_Circle_l2], UI[Fan_Circle_r1], UI[Fan_Circle_r2], UI[Gimbal_Yaw_Float], UI[Gimbal_Pitch_Float], UI[DART_Remind_String]);
         UIGraphRefresh(&referee_info.referee_id, 7, UI[Shoot_Loader_Circle], UI[Mode_Rectangle], UI[Fly_Control_Circle], UI[Limit_Line_1], UI[Limit_Line_2], UI[Shoot_Friction_Circle_l], UI[Shoot_Friction_Circle_r]);
         }
+    if(referee_info.AerialRobotEnergy.airforce_status!=0 || target_outpost >0 || delete_warnning ){
+        UIDelete(&referee_info.referee_id, UI_Data_Del_Layer, 4);
+    }
+    else {
+        sprintf(UI_State_sta[6].show_Data, "shoot dart");
+        UICharDraw(&UI_State_sta[6], "ss6", UI_Graph_ADD, 4, UI_Color_Orange, 80, 10, mode_start_x-380, mode_start_y, "dart");
+        UICharRefresh(&referee_info.referee_id, UI_State_sta[6]);
 
-    // for (int i=1;i<=LENGTH;){
-    //     memcpy(&(UI[i]), &(UI[i - 1]), sizeof(Graph_Data_t));
-    //     i+=2;
-    // }
+        sprintf(UI_State_sta[7].show_Data, "open door");
+        UICharDraw(&UI_State_sta[7], "ss7", UI_Graph_ADD, 4, UI_Color_Orange, 80, 10, mode_start_x-330, mode_start_y+100, "remember");
+        UICharRefresh(&referee_info.referee_id, UI_State_sta[7]);
+    }
 }
 
 
