@@ -6,5 +6,11 @@ CompileFlags:
         - -Id:\program files\arm-gnu-toolchain-12.3.rel1-mingw-w64-i686-arm-none-eabi\lib\gcc\arm-none-eabi\12.3.1\include
         - -Id:\program files\arm-gnu-toolchain-12.3.rel1-mingw-w64-i686-arm-none-eabi\lib\gcc\arm-none-eabi\12.3.1\include-fixed
         - -Id:\program files\arm-gnu-toolchain-12.3.rel1-mingw-w64-i686-arm-none-eabi\arm-none-eabi\include
+        - -IE:\Program Files\Arm GNU Toolchain arm-none-eabi\14.2 rel1\arm-none-eabi\include\c++\14.2.1
+        - -IE:\Program Files\Arm GNU Toolchain arm-none-eabi\14.2 rel1\arm-none-eabi\include\c++\14.2.1\arm-none-eabi\thumb\v7e-m+fp\hard
+        - -IE:\Program Files\Arm GNU Toolchain arm-none-eabi\14.2 rel1\arm-none-eabi\include\c++\14.2.1\backward
+        - -IE:\Program Files\Arm GNU Toolchain arm-none-eabi\14.2 rel1\lib\gcc\arm-none-eabi\14.2.1\include
+        - -IE:\Program Files\Arm GNU Toolchain arm-none-eabi\14.2 rel1\lib\gcc\arm-none-eabi\14.2.1\include-fixed
+        - -IE:\Program Files\Arm GNU Toolchain arm-none-eabi\14.2 rel1\arm-none-eabi\include
     CompilationDatabase: ./build/Debug
-    Compiler: D:\Program Files\arm-gnu-toolchain-12.3.rel1-mingw-w64-i686-arm-none-eabi\bin\arm-none-eabi-gcc.exe
+    Compiler: E:\Program Files\Arm GNU Toolchain arm-none-eabi\14.2 rel1\bin\arm-none-eabi-g++.exe
