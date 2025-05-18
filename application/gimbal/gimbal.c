@@ -1,15 +1,12 @@
-#include "stdio.h"
 
 #include "gimbal.h"
+#include "rm_referee.h"
 #include "robot_def.h"
 #include "dji_motor.h"
 #include "ins_task.h"
 #include "message_center.h"
-#include "general_def.h"
 
 #include "bmi088.h"
-#include "referee_UI.h"
-#include "power_calc.h"
 
 static INS_Instance *gimbal_IMU_data; // 云台IMU数据
 static DJIMotorInstance *yaw_motor, *pitch_motor;
@@ -19,13 +16,10 @@ static Subscriber_t *gimbal_sub;                  // cmd控制消息订阅者
 static Gimbal_Upload_Data_s gimbal_feedback_data; // 回传给cmd的云台状态信息
 static Gimbal_Ctrl_Cmd_s gimbal_cmd_recv;         // 来自cmd的控制信息
 
-extern referee_info_t referee_info;
-static referee_info_t *referee_data; // 用于获取裁判系统的数据
-
 extern float delta_pitch;
 extern float delta_yaw;
 float init_angle;
-int flag =1;
+int flag = 1;
 void GimbalInit()
 {
     BMI088_Init_Config_s config = {
@@ -106,20 +100,20 @@ void GimbalInit()
     // PITCH
     Motor_Init_Config_s pitch_config = {
         .can_init_config = {
-            .can_handle = &hcan1,
-            .tx_id      = 5,
+            .can_handle = &hcan2,
+            .tx_id      = 2,
         },
         .controller_param_init_config = {
             //.current_feedforward_ptr = &(delta_pitch),
-            .angle_PID               = {
-                              .Kp            = 120,  // 150
-                              .Ki            = 4000, // 1
-                              .Kd            = 3.4,  // 3
-                              .Improve       = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_ChangingIntegrationRate,
-                              .CoefA         = 0.005,
-                              .CoefB         = 0.0005,
-                              .IntegralLimit = 10,
-                              .MaxOut        = 40,
+            .angle_PID = {
+                .Kp            = 120,  // 150
+                .Ki            = 4000, // 1
+                .Kd            = 3.4,  // 3
+                .Improve       = PID_Trapezoid_Intergral | PID_Integral_Limit | PID_Derivative_On_Measurement | PID_ChangingIntegrationRate,
+                .CoefA         = 0.005,
+                .CoefB         = 0.0005,
+                .IntegralLimit = 10,
+                .MaxOut        = 40,
             },
             .speed_PID = {
                 .Kp                = 3000, // 10500, // 13000,//10500,  // 10500
@@ -149,10 +143,10 @@ void GimbalInit()
     yaw_motor   = DJIMotorInit(&yaw_config);
     pitch_motor = DJIMotorInit(&pitch_config);
 
-    yaw_motor->Block_Time=0;
-    pitch_motor->Block_Time=0;
-    gimbal_pub = PubRegister("gimbal_feed", sizeof(Gimbal_Upload_Data_s));
-    gimbal_sub = SubRegister("gimbal_cmd", sizeof(Gimbal_Ctrl_Cmd_s));
+    yaw_motor->Block_Time   = 0;
+    pitch_motor->Block_Time = 0;
+    gimbal_pub              = PubRegister("gimbal_feed", sizeof(Gimbal_Upload_Data_s));
+    gimbal_sub              = SubRegister("gimbal_cmd", sizeof(Gimbal_Ctrl_Cmd_s));
 }
 
 /* 机器人云台控制核心任务,后续考虑只保留IMU控制,不再需要电机的反馈 */
@@ -161,17 +155,16 @@ void GimbalTask()
     // 获取云台控制数据
     // 后续增加未收到数据的处理
     SubGetMessage(gimbal_sub, &gimbal_cmd_recv);
-    if (flag){
-    init_angle = yaw_motor->measure.total_angle;
-    flag=0;
+    if (flag) {
+        init_angle = yaw_motor->measure.total_angle;
+        flag       = 0;
     }
-    if (gimbal_cmd_recv.gimbal_mode == GIMBAL_ZERO_FORCE)
-    {
+    if (gimbal_cmd_recv.gimbal_mode == GIMBAL_ZERO_FORCE) {
         // 停止
-            DJIMotorStop(yaw_motor);
-            DJIMotorStop(pitch_motor);
+        DJIMotorStop(yaw_motor);
+        DJIMotorStop(pitch_motor);
     } // 使用陀螺仪的反馈,底盘根据yaw电机的offset跟随云台或视觉模式采用
-    else{
+    else {
         DJIMotorEnable(yaw_motor);
         DJIMotorEnable(pitch_motor);
         DJIMotorChangeFeed(yaw_motor, ANGLE_LOOP, OTHER_FEED);
@@ -182,10 +175,10 @@ void GimbalTask()
         DJIMotorSetRef(pitch_motor, gimbal_cmd_recv.pitch);
     }
     // 设置反馈数据,主要是imu和yaw的ecd
-    gimbal_feedback_data.gimbal_imu_data              = gimbal_IMU_data;
-    gimbal_feedback_data.yaw_motor              = yaw_motor;
-    gimbal_feedback_data.pitch_motor=pitch_motor;
-    gimbal_feedback_data.yaw_init_angle=init_angle;
-        // 推送消息
-        PubPushMessage(gimbal_pub, (void *)&gimbal_feedback_data);
+    gimbal_feedback_data.gimbal_imu_data = gimbal_IMU_data;
+    gimbal_feedback_data.yaw_motor       = yaw_motor;
+    gimbal_feedback_data.pitch_motor     = pitch_motor;
+    gimbal_feedback_data.yaw_init_angle  = init_angle;
+    // 推送消息
+    PubPushMessage(gimbal_pub, (void *)&gimbal_feedback_data);
 }
